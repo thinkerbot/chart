@@ -1,11 +1,9 @@
 Chart.fetch = function () {
-  d3.json('<%= transport_url %>', function (error, json) {
+  d3.json(Chart.transport_url, function (error, json) {
     if (typeof json == 'undefined') {
       alert(error);
     } else if (typeof json.data == 'undefined') {
-      d3.json('<%= shutdown_url %>', function (error, json) {
-        console.log("No more data");
-      });
+      Chart.shutdown();
     } else {
       Chart.render(json.data);
       setTimeout(Chart.fetch, 0);

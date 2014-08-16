@@ -27,12 +27,16 @@
     <script>window.d3 || document.write('<script src="js/vendor/d3.v3.min.js"><\/script>')</script>
     <script src="js/plugins.js"></script>
     <script src="js/main.js"></script>
-    <script src="js/main.js"></script>
-    <script>Chart = {};</script>
     <script>
+      Chart = {};
+      Chart.transport_url = '<%= transport_url %>';
+      Chart.shutdown_url  = '<%= shutdown_url %>';
+      Chart.shutdown = function () {
+        d3.json(Chart.shutdown_url, function (error, json) {
+          console.log("No more data");
+        });
+      };
 <%= erb :"charts/#{chart}.js" %>
-    </script>
-    <script>
 <%= erb :"transports/#{transport}.js" %>
     </script>
   </body>
