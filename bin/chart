@@ -2,6 +2,8 @@
 begin
   require 'optparse'
   require 'chart'
+  require 'sinatra'
+  require 'json'
 
   options = {}
   OptionParser.new do |opts|
@@ -20,6 +22,56 @@ options:
       exit
     end
   end.parse!
+
+  chart = 'monitor'
+  transport = 'poll'
+
+  fork do
+    exec "open http://localhost:4567"
+  end
+
+  Sinatra.new do
+    set :app_file, __FILE__
+    set :root, File.expand_path("../..", __FILE__)
+    set :public_dir, settings.root + "/public"
+    set :views, settings.root + "/views"
+    set :method_override, true
+    set :bind, "0.0.0.0"
+    set :port, 4567
+    set :chart, chart
+    set :transport, transport
+    set :raise_errors, true
+
+    get('/')     { erb :"charts/#{chart}.html", :locals => {:chart => settings.chart, :transport => settings.transport} }
+    get('/quit') { self.class.quit! }
+    get('/poll') { next_data || empty_data }
+
+    helpers do
+      def empty_data
+        {}.to_json
+      end
+
+      def next_data
+        if line = ARGF.gets
+          {"data" => [line]}.to_json
+        else
+          nil
+        end
+      end
+
+      def base_url
+        @base_url ||= "#{request.env['rack.url_scheme']}://#{request.env['HTTP_HOST']}"
+      end
+
+      def transport_url
+        File.join(base_url, settings.transport)
+      end
+
+      def shutdown_url
+        File.join(base_url, 'quit')
+      end
+    end
+  end.run!
 
 rescue Interrupt
   exit 130

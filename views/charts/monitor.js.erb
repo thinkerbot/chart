@@ -1,0 +1,10 @@
+Chart.render = function (data) {
+  var p = d3.select("#main").selectAll("p")
+      .data(data)
+      .text(String);
+
+  p.enter().append("p")
+      .text(String);
+
+  p.exit();
+};
