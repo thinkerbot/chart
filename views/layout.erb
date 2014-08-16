@@ -36,6 +36,9 @@
           console.log("No more data");
         });
       };
+      window.onbeforeunload = function() {
+        Chart.shutdown();
+      };
 <%= erb :"charts/#{chart}.js" %>
 <%= erb :"transports/#{transport}.js" %>
     </script>
