@@ -5,7 +5,10 @@ begin
   require 'sinatra'
   require 'json'
 
-  options = {}
+  options = {
+    :chart => 'monitor',
+    :transport => 'poll',
+  }
   OptionParser.new do |opts|
     opts.banner = %{
 usage: chart [options] FILES...
@@ -21,10 +24,20 @@ options:
       puts Chart.version
       exit
     end
+
+    opts.on("-t", "--chart-type TYPE", "set the chart type (#{options[:chart]})") do |value|
+      options[:chart] = value
+    end
   end.parse!
 
-  chart = 'monitor'
-  transport = 'poll'
+  DEFAULT_FORMATS = {
+    "monitor" => "line",
+    "series"  => "csv",
+  }
+
+  chart = options[:chart]
+  transport = options[:transport]
+  input_format = options[:input_format] || DEFAULT_FORMATS[chart]
 
   # Force explicit '-' to create a chart interactively.
   if ARGV.empty? && STDIN.tty?
@@ -45,6 +58,7 @@ options:
     set :port, 4567
     set :chart, chart
     set :transport, transport
+    set :input_format, input_format
     set :raise_errors, true
 
     get('/')     { erb :"charts/#{chart}.html", :locals => {:chart => settings.chart, :transport => settings.transport} }
@@ -58,10 +72,25 @@ options:
 
       def next_data
         begin
-          if line = ARGF.gets
-            {"data" => [line]}.to_json
-          else
-            nil
+          case settings.input_format
+          when "line"
+            if line = ARGF.gets
+              {"data" => [line]}.to_json
+            else
+              nil
+            end
+          when "csv"
+            lines = []
+            while line = ARGF.gets
+              lines << line.split(',')
+            end
+            return nil if lines.empty?
+
+            keys = lines.shift
+            lines.map! do |values|
+              Hash[keys.zip(values)]
+            end
+            {"data" => lines}.to_json
           end
         rescue IOError
           nil

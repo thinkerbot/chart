@@ -1,11 +1,12 @@
 Chart.fetch = function () {
   d3.json(Chart.transport_url, function (error, json) {
     if (typeof json == 'undefined') {
-      alert(error);
+      alert(error.statusText);
     } else if (typeof json.data == 'undefined') {
       Chart.shutdown();
     } else {
-      Chart.render(json.data);
+      Chart.json = json;
+      Chart.render(json);
       setTimeout(Chart.fetch, 0);
     };
   });

@@ -1,6 +1,6 @@
-Chart.render = function (data) {
-  var p = d3.select("#main").selectAll("p")
-      .data(data)
+Chart.render = function (json) {
+  var p = d3.select("body").selectAll("p")
+      .data(json.data)
       .text(String);
 
   p.enter().append("p")
