@@ -1,0 +1,12 @@
+#!/bin/bash
+. test/integration/helper
+
+#
+# -h
+#
+
+test_chart_h_prints_help () {
+chart -h | grep -q "usage: chart"
+}
+
+. ts

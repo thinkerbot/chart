@@ -1,5 +1,9 @@
 require "chart/version"
 
 module Chart
-  # Your code goes here...
+  module_function
+
+  def version
+    "chart version %s (%s)" % [VERSION, RELDATE]
+  end
 end
