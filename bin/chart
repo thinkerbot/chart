@@ -26,6 +26,11 @@ options:
   chart = 'monitor'
   transport = 'poll'
 
+  # Force explicit '-' to create a chart interactively.
+  if ARGV.empty? && STDIN.tty?
+    STDIN.close
+  end
+
   fork do
     exec "open http://localhost:4567"
   end
@@ -52,9 +57,13 @@ options:
       end
 
       def next_data
-        if line = ARGF.gets
-          {"data" => [line]}.to_json
-        else
+        begin
+          if line = ARGF.gets
+            {"data" => [line]}.to_json
+          else
+            nil
+          end
+        rescue IOError
           nil
         end
       end
