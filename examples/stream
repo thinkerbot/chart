@@ -1,0 +1,10 @@
+#!/bin/bash
+# Provides an irregular stream of messages to monitor.
+
+ruby -e '
+  STDOUT.sync = true;
+  100.times do |i|
+    puts i.to_s
+    sleep rand(10)/10.0
+  end
+' | chart -O

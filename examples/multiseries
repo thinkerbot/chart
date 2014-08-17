@@ -1,0 +1,3 @@
+#!/bin/bash
+# Chart a multiseries
+chart -t series data/multiseries.csv -O
