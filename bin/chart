@@ -54,14 +54,6 @@ options:
     STDIN.close
   end
 
-  chart_url = "http://localhost:4567"
-  if options[:open]
-    fork do
-      exec "open #{chart_url}"
-    end
-  end
-  puts chart_url
-
   parser = Chart::Parser.new(ARGF)
   feeder = Chart::Feeders.lookup(input_style).new(parser)
 
@@ -99,6 +91,14 @@ options:
 
   case options[:mode]
   when :server
+    chart_url = "http://localhost:4567"
+    if options[:open]
+      fork do
+        exec "open #{chart_url}"
+      end
+    end
+    puts chart_url
+
     server.run!
   when :echo
     loop do

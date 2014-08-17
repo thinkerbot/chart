@@ -2,6 +2,19 @@
 . test/integration/helper
 
 #
+# -e
+#
+
+test_chart_e_prints_data_messages () {
+printf "%s\n" N 1 2 3 | chart -e | assert_output "$(cat <<DOC
+{"headers":["N"],"data":[["1"]]}
+{"headers":["N"],"data":[["2"]]}
+{"headers":["N"],"data":[["3"]]}
+DOC)
+"
+}
+
+#
 # -h
 #
 
