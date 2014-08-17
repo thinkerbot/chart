@@ -1,4 +1,6 @@
 require "chart/version"
+require "chart/parser"
+require "chart/feeders"
 
 module Chart
   module_function

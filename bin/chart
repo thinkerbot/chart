@@ -9,6 +9,7 @@ begin
     :chart => 'monitor',
     :transport => 'poll',
     :open => false,
+    :mode => :server,
   }
   OptionParser.new do |opts|
     opts.banner = %{
@@ -18,6 +19,10 @@ usage: chart [options] FILES...
 
 options:
 }.lstrip
+
+    opts.on("-e", "--echo-data", "print data and exit") do
+      options[:mode] = :echo
+    end
 
     opts.on("-h", "--help", "print this help") do
       puts opts
@@ -35,14 +40,14 @@ options:
     end
   end.parse!
 
-  DEFAULT_FORMATS = {
-    "monitor" => "line",
-    "series"  => "csv",
+  DEFAULT_STYLES = {
+    "monitor" => :line,
+    "series"  => :file,
   }
 
   chart = options[:chart]
   transport = options[:transport]
-  input_format = options[:input_format] || DEFAULT_FORMATS[chart]
+  input_style = options[:input_style] || DEFAULT_STYLES[chart]
 
   # Force explicit '-' to create a chart interactively.
   if ARGV.empty? && STDIN.tty?
@@ -57,7 +62,10 @@ options:
   end
   puts chart_url
 
-  Sinatra.new do
+  parser = Chart::Parser.new(ARGF)
+  feeder = Chart::Feeders.lookup(input_style).new(parser)
+
+  server = Sinatra.new do
     set :app_file, __FILE__
     set :root, File.expand_path("../..", __FILE__)
     set :public_dir, settings.root + "/public"
@@ -67,45 +75,14 @@ options:
     set :port, 4567
     set :chart, chart
     set :transport, transport
-    set :input_format, input_format
+    set :feeder, feeder
     set :raise_errors, true
 
     get('/')     { erb :"charts/#{chart}.html", :locals => {:chart => settings.chart, :transport => settings.transport} }
     get('/quit') { self.class.quit! }
-    get('/poll') { next_data || empty_data }
+    get('/poll') { feeder.next_data.to_json }
 
     helpers do
-      def empty_data
-        {}.to_json
-      end
-
-      def next_data
-        begin
-          case settings.input_format
-          when "line"
-            if line = ARGF.gets
-              {"data" => [line]}.to_json
-            else
-              nil
-            end
-          when "csv"
-            lines = []
-            while line = ARGF.gets
-              lines << line.split(',')
-            end
-            return nil if lines.empty?
-
-            keys = lines.shift
-            lines.map! do |values|
-              Hash[keys.zip(values)]
-            end
-            {"data" => lines}.to_json
-          end
-        rescue IOError
-          nil
-        end
-      end
-
       def base_url
         @base_url ||= "#{request.env['rack.url_scheme']}://#{request.env['HTTP_HOST']}"
       end
@@ -118,7 +95,18 @@ options:
         File.join(base_url, 'quit')
       end
     end
-  end.run!
+  end
+
+  case options[:mode]
+  when :server
+    server.run!
+  when :echo
+    loop do
+      data = feeder.next_data
+      break if data.empty?
+      puts data.to_json
+    end
+  end
 
 rescue Interrupt
   exit 130
