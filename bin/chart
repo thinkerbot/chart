@@ -8,6 +8,7 @@ begin
   options = {
     :chart => 'monitor',
     :transport => 'poll',
+    :open => false,
   }
   OptionParser.new do |opts|
     opts.banner = %{
@@ -23,6 +24,10 @@ options:
       puts
       puts Chart.version
       exit
+    end
+
+    opts.on("-O", "--[no-]open", "open the chart url (#{options[:open]})") do |value|
+      options[:open] = value
     end
 
     opts.on("-t", "--chart-type TYPE", "set the chart type (#{options[:chart]})") do |value|
@@ -44,9 +49,13 @@ options:
     STDIN.close
   end
 
-  fork do
-    exec "open http://localhost:4567"
+  chart_url = "http://localhost:4567"
+  if options[:open]
+    fork do
+      exec "open #{chart_url}"
+    end
   end
+  puts chart_url
 
   Sinatra.new do
     set :app_file, __FILE__
