@@ -10,6 +10,7 @@ begin
     :transport => 'poll',
     :open => false,
     :mode => :server,
+    :config_file => "/dev/null",
   }
   OptionParser.new do |opts|
     opts.banner = %{
@@ -19,6 +20,10 @@ usage: chart [options] FILES...
 
 options:
 }.lstrip
+
+    opts.on("-c", "--config-file CONFIG_FILE", "set configs from a file") do |value|
+      options[:config_file] = value
+    end
 
     opts.on("-e", "--echo-data", "print data and exit") do
       options[:mode] = :echo
@@ -48,6 +53,7 @@ options:
   chart = options[:chart]
   transport = options[:transport]
   input_style = options[:input_style] || DEFAULT_STYLES[chart]
+  config_file = options[:config_file]
 
   # Force explicit '-' to create a chart interactively.
   if ARGV.empty? && STDIN.tty?
@@ -68,9 +74,11 @@ options:
     set :chart, chart
     set :transport, transport
     set :feeder, feeder
+    set :config_file, config_file
     set :raise_errors, true
 
     get('/')     { erb :"charts/#{chart}.html", :locals => {:chart => settings.chart, :transport => settings.transport} }
+    get('/config') { erb :"charts/#{chart}.json.erb" }
     get('/quit') { self.class.quit! }
     get('/poll') { feeder.next_data.to_json }
 
@@ -79,12 +87,21 @@ options:
         @base_url ||= "#{request.env['rack.url_scheme']}://#{request.env['HTTP_HOST']}"
       end
 
+      def config_url
+        File.join(base_url, "config")
+      end
+
       def transport_url
         File.join(base_url, settings.transport)
       end
 
       def shutdown_url
         File.join(base_url, 'quit')
+      end
+
+      def config
+        data = File.read(settings.config_file)
+        data.empty? ? {} : JSON.load(data)
       end
     end
   end

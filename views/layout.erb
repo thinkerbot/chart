@@ -27,8 +27,21 @@
     <script src="js/main.js"></script>
     <script>
       Chart = {};
+      Chart.config_url    = '<%= config_url %>';
       Chart.transport_url = '<%= transport_url %>';
       Chart.shutdown_url  = '<%= shutdown_url %>';
+
+      Chart.configure = function () {
+        d3.json(Chart.config_url, function (error, json) {
+          if (typeof json == 'undefined') {
+            alert(error.statusText);
+          } else {
+            Chart.config = json;
+          };
+        });
+      };
+      Chart.configure();
+
       Chart.shutdown = function () {
         d3.json(Chart.shutdown_url, function (error, json) {
           console.log("No more data");
@@ -37,6 +50,7 @@
       window.onbeforeunload = function() {
         Chart.shutdown();
       };
+
 <%= erb :"charts/#{chart}.js" %>
 <%= erb :"transports/#{transport}.js" %>
     </script>
