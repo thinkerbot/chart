@@ -1,0 +1,41 @@
+#!/usr/bin/env ruby
+begin
+  require 'optparse'
+  require 'chart/server'
+
+  options = {
+    :port     => 4567,
+    :bind     => "0.0.0.0",
+  }
+  OptionParser.new do |opts|
+    opts.banner = %{
+usage: chart-server [options]
+
+  Start the chart server.
+
+options:
+}.lstrip
+
+    opts.on("-b", "--binding IP", "bind to the specified IP (#{options[:binding]})") do |value|
+      options[:bind] = value
+    end
+
+    opts.on("-h", "--help", "print this help") do
+      puts opts
+      puts
+      puts Chart.version
+      exit
+    end
+
+    opts.on("-p", "--port PORT", "run on the specified port (#{options[:port]})") do |value|
+      options[:port] = value
+    end
+  end.parse!
+
+  Chart::Server.run!
+
+rescue Interrupt
+  exit 130
+rescue Errno::EPIPE
+  exit 0
+end

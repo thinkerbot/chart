@@ -7,7 +7,6 @@ Chart.fetch = function () {
     } else {
       Chart.json = json;
       Chart.render(json);
-      setTimeout(Chart.fetch, 0);
     };
   });
 };
