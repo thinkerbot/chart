@@ -27,6 +27,16 @@
     <script src="js/main.js"></script><% if defined?(chart) %>
     <script>
       Chart = {};
+      Chart.config = <%= config.to_json %>;
+      Chart.casters = {
+        x: function(x) { return +x },
+        y: function(y) { return +y },
+        z: function(z) { return +z }
+      };
+      Chart.topic = {
+        parse: function(str) { return str.slice(0,str.indexOf("@")); },
+        format: function(row) { return row.topic + "@" + row.z; }
+      };
       Chart.fetch_url = '<%= fetch_url(id, transport) %>';
 
       Chart.no_more_data = function () {

@@ -1,12 +1,15 @@
 Chart.fetch = function () {
-  d3.json(Chart.fetch_url, function (error, json) {
-    if (typeof json == 'undefined') {
+  d3.csv(Chart.fetch_url).row(function(d) {
+    d.x = Chart.casters.x(d.x);
+    d.y = Chart.casters.y(d.y);
+    d.z = Chart.casters.z(d.z);
+    return d;
+  }).get(function(error, rows) {
+    if (typeof rows == 'undefined') {
       alert(error.statusText);
-    } else if (typeof json.data == 'undefined') {
-      Chart.no_more_data();
     } else {
-      Chart.json = json;
-      Chart.render(json);
+      Chart.rows = rows;
+      Chart.render(Chart.config, Chart.rows);
     };
   });
 };

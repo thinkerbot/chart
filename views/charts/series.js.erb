@@ -1,11 +1,9 @@
-Chart.render = function (json) {
+Chart.render = function (config, rows) {
   var margin = {top: 20, right: 80, bottom: 30, left: 50},
       width = 960 - margin.left - margin.right,
       height = 500 - margin.top - margin.bottom;
 
-  var parseDate = d3.time.format("%Y%m%d").parse;
-
-  var x = d3.time.scale()
+  var x = d3.scale.linear()
       .range([0, width]);
 
   var y = d3.scale.linear()
@@ -32,36 +30,23 @@ Chart.render = function (json) {
     .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-  var headers = json.headers;
-  var data    = json.data;
+  // Data
+  x.domain(d3.extent(rows, function(d) { return d.x; }));
+  y.domain(d3.extent(rows, function(d) { return d.y; }));
 
-  color.domain(headers.slice(1, headers.length));
+  var data = d3.nest()
+      .key(Chart.topic.format)
+      .entries(rows);
 
-  data.forEach(function(d) {
-    d[0] = parseDate(d[0]);
-  });
-
-  var series = color.domain().map(function(y_name, index) {
-    return {
-      name: y_name,
-      values: data.map(function(d) {
-        return {x: d[0], y: parseFloat(d[index + 1])};
-      })
-    };
-  });
-Chart.series = series;
-  x.domain(d3.extent(data, function(d) { return d[0]; }));
-
-  y.domain([
-    d3.min(series, function(c) { return d3.min(c.values, function(v) { return v.y; }); }),
-    d3.max(series, function(c) { return d3.max(c.values, function(v) { return v.y; }); })
-  ]);
+  // Config
+  var topics = d3.keys(config.topics);
+  color.domain(topics);
 
   svg.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
       .call(xAxis);
-
+  
   svg.append("g")
       .attr("class", "y axis")
       .call(yAxis)
@@ -72,20 +57,25 @@ Chart.series = series;
       .style("text-anchor", "end")
       .text("Y");
 
-  var city = svg.selectAll(".city")
-      .data(series)
-    .enter().append("g")
-      .attr("class", "city");
-  
-  city.append("path")
+  var series = svg.selectAll(".series")
+      .data(data)
+      .enter().append("g")
+      .attr("class", "series");
+
+  series.append("path")
       .attr("class", "line")
       .attr("d", function(d) { return line(d.values); })
-      .style("stroke", function(d) { return color(d.name); });
+      .style("stroke", function(d) { return color(Chart.topic.parse(d.key)); });
 
-  city.append("text")
-      .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; })
-      .attr("transform", function(d) { return "translate(" + x(d.value.x) + "," + y(d.value.y) + ")"; })
+  series.append("text")
+      .datum(function(d) {
+        var last_value = d.values[d.values.length - 1];
+        return {key: d.key, x: last_value.x, y: last_value.y};
+      })
+      .attr("transform", function(d) {
+        return "translate(" + x(d.x) + "," + y(d.y) + ")";
+      })
       .attr("x", 3)
       .attr("dy", ".35em")
-      .text(function(d) { return d.name; });
+      .text(function(d) { return d.key; });
 };

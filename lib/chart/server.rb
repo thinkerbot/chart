@@ -22,6 +22,43 @@ module Chart
     # printf "abc" | curl -X POST -H "Accept: application/json" -F data=@- http://localhost:4567/12/data
     # curl -H "Accept: application/json" http://localhost:4567/12/data
 
+    get('/xyz') {
+      erb :"charts/series.html", :locals => {
+        :id => 'xyz',
+        :chart => 'series',
+        :transport => 'data',
+        :config => {
+          'id' => 'xyz',
+          "dimensions" => {
+            "x" => {"name" => "X", "type" => "numeric"},
+            "y" => {"name" => "Y", "type" => "numeric"},
+            "z" => {"name" => "Z", "type" => "numeric"},
+          },
+          "topics" => {
+            "a" => {"name" => "A"}
+          }
+        }
+      }
+    }
+    get('/xyz/data.?:format?') {
+      # series,z,x,y
+      data = %{
+        topic,z,x,y
+        a,1,1,1
+        a,1,2,2
+        a,2,1,1
+        a,2,2,1
+        a,2,3,2
+        a,3,1,1
+        a,3,2,1
+        a,3,3,1
+        a,3,4,2
+      }.lstrip.tr(" ", "")
+      respond_to do |f|
+        f.csv  { data }
+      end
+    }
+
     get('/')          { list }
     post('/new')      { create(params[:config] || {}) }
     get('/:id')       {|id| show(id, params[:transport] || "data") }
