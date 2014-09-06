@@ -2,15 +2,14 @@
 begin
   require 'optparse'
   require 'chart'
-  require 'sinatra'
   require 'json'
 
   options = {
-    :chart => 'monitor',
-    :transport => 'poll',
-    :open => false,
-    :mode => :server,
-    :config_file => "/dev/null",
+    :defaults   => [nil, nil, nil, nil],
+    :input_type => 'nxyz',
+    :recvr_type => :line,
+    :sendr_type => :echo,
+    :null_str   => nil,
   }
   OptionParser.new do |opts|
     opts.banner = %{
@@ -19,15 +18,8 @@ usage: chart [options] FILES...
   Create d3 charts from data files.
 
 options:
+
 }.lstrip
-
-    opts.on("-c", "--config-file CONFIG_FILE", "set configs from a file") do |value|
-      options[:config_file] = value
-    end
-
-    opts.on("-e", "--echo-data", "print data and exit") do
-      options[:mode] = :echo
-    end
 
     opts.on("-h", "--help", "print this help") do
       puts opts
@@ -36,94 +28,50 @@ options:
       exit
     end
 
-    opts.on("-O", "--[no-]open", "open the chart url (#{options[:open]})") do |value|
-      options[:open] = value
+    opts.on("-i", "--input-type TYPE", "sets input type") do |value|
+      options[:input_type] = value
     end
 
-    opts.on("-t", "--chart-type TYPE", "set the chart type (#{options[:chart]})") do |value|
-      options[:chart] = value
+    opts.on("-N", "--null-str STR", "sets the null str ") do |value|
+      options[:null_str] = value
+    end
+
+    opts.on("-n", "--default-name NAME", "sets default name") do |value|
+      options[:defaults][0] = value
+    end
+
+    opts.on("-x", "--default-x VALUE", "sets default x value") do |value|
+      options[:defaults][1] = value
+    end
+
+    opts.on("-y", "--default-y VALUE", "sets default y value") do |value|
+      options[:defaults][2] = value
+    end
+
+    opts.on("-z", "--default-z VALUE", "sets default z value") do |value|
+      options[:defaults][3] = value
     end
   end.parse!
 
-  DEFAULT_STYLES = {
-    "monitor" => :line,
-    "series"  => :file,
-  }
+  defaults   = options[:defaults]
+  input_type = options[:input_type]
+  recvr_type = options[:recvr_type]
+  sendr_type = options[:sendr_type]
+  null_str   = options[:null_str]
 
-  chart = options[:chart]
-  transport = options[:transport]
-  input_style = options[:input_style] || DEFAULT_STYLES[chart]
-  config_file = options[:config_file]
+  parser = Chart::Parsers.create(input_type)
+  recvr  = Chart::Receivers.create(recvr_type)
+  sendr  = Chart::Senders.create(sendr_type)
 
-  # Force explicit '-' to create a chart interactively.
-  if ARGV.empty? && STDIN.tty?
-    STDIN.close
+  while line = ARGF.gets
+    line.chomp!("\n")
+    nxyz = parser.call(line, defaults, null_str)
+    data = recvr.call(nxyz)
+    sendr.call(data) if data
   end
 
-  parser = Chart::Parser.new(ARGF)
-  feeder = Chart::Feeders.lookup(input_style).new(parser)
-
-  server = Sinatra.new do
-    set :app_file, __FILE__
-    set :root, File.expand_path("../..", __FILE__)
-    set :public_dir, settings.root + "/public"
-    set :views, settings.root + "/views"
-    set :method_override, true
-    set :bind, "0.0.0.0"
-    set :port, 4567
-    set :chart, chart
-    set :transport, transport
-    set :feeder, feeder
-    set :config_file, config_file
-    set :raise_errors, true
-
-    get('/')     { erb :"charts/#{chart}.html", :locals => {:chart => settings.chart, :transport => settings.transport} }
-    get('/config') { erb :"charts/#{chart}.json.erb" }
-    get('/quit') { self.class.quit! }
-    get('/poll') { feeder.next_data.to_json }
-
-    helpers do
-      def base_url
-        @base_url ||= "#{request.env['rack.url_scheme']}://#{request.env['HTTP_HOST']}"
-      end
-
-      def config_url
-        File.join(base_url, "config")
-      end
-
-      def transport_url
-        File.join(base_url, settings.transport)
-      end
-
-      def shutdown_url
-        File.join(base_url, 'quit')
-      end
-
-      def config
-        data = File.read(settings.config_file)
-        data.empty? ? {} : JSON.load(data)
-      end
-    end
-  end
-
-  case options[:mode]
-  when :server
-    chart_url = "http://localhost:4567"
-    if options[:open]
-      fork do
-        exec "open #{chart_url}"
-      end
-    end
-    puts chart_url
-
-    server.run!
-  when :echo
-    loop do
-      data = feeder.next_data
-      break if data.empty?
-      puts data.to_json
-    end
-  end
+  data = recvr.call(nil)
+  sendr.call(data) if data
 
 rescue Interrupt
   exit 130
