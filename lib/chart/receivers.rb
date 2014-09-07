@@ -1,3 +1,5 @@
+require 'chart/receivers/line'
+
 module Chart
   module Receivers
     module_function
@@ -5,10 +7,9 @@ module Chart
     def create(recvr_type)
       case recvr_type
       when :line
-        lambda do |nxyz|
-          nxyz ? [nxyz] : nil
-        end
-      else raise "unknown receiver type: #{recvr_type}"
+        Receivers::Line.new
+      else
+        raise "unknown receiver type: #{recvr_type}"
       end
     end
   end

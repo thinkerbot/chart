@@ -4,9 +4,8 @@ begin
   require 'chart'
   require 'json'
 
-  null_lambda = lambda { nil }
   options = {
-    :defaults   => [null_lambda, null_lambda, null_lambda, null_lambda],
+    :defaults   => [],
     :input_type => 'nxyz',
     :recvr_type => :line,
     :sendr_type => :echo,
@@ -43,7 +42,7 @@ options:
 
     opts.on("-t", "--time-now FIELDS", "sets default for fields to now") do |value|
       value.chars.each do |c|
-        i = Chart::Parsers::DATA_TYPES.index(c)
+        i = Chart::Parser::DATA_TYPES.index(c)
         options[:defaults][i] = lambda { Time.now.utc.iso8601 }
       end
     end
@@ -61,19 +60,20 @@ options:
     end
   end.parse!
 
-  defaults   = options[:defaults]
   input_type = options[:input_type]
   recvr_type = options[:recvr_type]
   sendr_type = options[:sendr_type]
-  null_str   = options[:null_str]
 
-  parser = Chart::Parsers.create(input_type)
+  parser = Chart::Parsers.create(input_type,
+    :defaults => options[:defaults],
+    :null_str => options[:null_str],
+  )
   recvr  = Chart::Receivers.create(recvr_type)
   sendr  = Chart::Senders.create(sendr_type)
 
   while line = ARGF.gets
     line.chomp!("\n")
-    nxyz = parser.call(line, defaults, null_str)
+    nxyz = parser.call(line)
     data = recvr.call(nxyz)
     sendr.call(data) if data
   end

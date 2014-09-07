@@ -1,3 +1,5 @@
+require 'chart/senders/echo'
+
 module Chart
   module Senders
     module_function
@@ -5,12 +7,9 @@ module Chart
     def create(sendr_type)
       case sendr_type
       when :echo
-        lambda do |data|
-          data.each do |nxyz|
-            puts nxyz.join(' ')
-          end
-        end
-      else raise "unknown sendr type: #{sendr_type}"
+        Senders::Echo.new
+      else
+        raise "unknown sendr type: #{sendr_type}"
       end
     end
   end
