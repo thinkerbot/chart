@@ -4,3 +4,7 @@ export PATH="$PWD/vendor/ts/bin:$PATH"
 transpose () {
   tr "\n" " " | sed -e "s/ $//"
 }
+
+underscore_times () {
+  sed -e 's/[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}T[[:digit:]]\{2\}:[[:digit:]]\{2\}:[[:digit:]]\{2\}\(\.[[:digit:]]\{1,\}\)\{0,1\}Z/_/g'
+}

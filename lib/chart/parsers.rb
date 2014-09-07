@@ -15,7 +15,7 @@ module Chart
           chars = line.split(/\s+/, count)
           order.map do |i, j|
             char = chars[i]
-            char.nil? || char == null_str ? (defaults[j] || null_str) : char
+            char.nil? || char == null_str ? (defaults[j].call || null_str) : char
           end
         end
       else

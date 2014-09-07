@@ -75,6 +75,22 @@ b 4 5 6
 }
 
 #
+# -t
+#
+
+test_chart_t_sets_field_defaults_to_now () {
+cat > "$infile" <<DOC
+2
+5
+DOC
+
+chart -n a -t xz -i y "$infile" | underscore_times | assert_output "\
+a _ 2 _
+a _ 5 _
+"
+}
+
+#
 # -x
 #
 
