@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+
+begin
+  require 'optparse'
+  require 'chart'
+  require 'irb'
+
+  options = Chart.options()
+  OptionParser.new do |opts|
+    opts.banner = %{
+usage: chart-console [options]
+
+  Gives you a console with the cql connection set up as normal/
+
+    $ chart-console
+    > conn.exec("select * from charts")
+    ...
+
+options:
+
+}.lstrip
+
+    opts.on("-h", "--help", "print this help") do
+      puts opts
+      puts
+      puts Chart.version
+      exit
+    end
+
+    opts.on("--version", "print version information") do |node|
+      puts Chart.version
+      exit
+    end
+  end.parse!
+
+  Chart.setup(options)
+  ARGV.clear
+
+  def conn
+    Chart.conn
+  end
+
+  IRB.start(__FILE__)
+end

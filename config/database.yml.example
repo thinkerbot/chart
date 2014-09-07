@@ -1,0 +1,19 @@
+default: &DEFAULT
+  connection_timeout: 5
+  # credentials:
+  #   username:
+  #   password:
+  connections_per_node: 1
+  default_consistency: :one
+
+development:
+  <<: *DEFAULT
+  hosts: [192.168.33.10]
+  port: 9042
+  keyspace: chart_development
+
+test:
+  <<: *DEFAULT
+  hosts: [192.168.33.10]
+  port: 9042
+  keyspace: chart_test

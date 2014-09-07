@@ -14,11 +14,12 @@ Gem::Specification.new do |spec|
   spec.license       = "MIT"
 
   spec.files         = []
-  spec.executables   = ["chart"]
+  spec.executables   = ["chart", "chart-console"]
   spec.test_files    = []
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "sinatra"
+  spec.add_dependency "cql-rb"
+  spec.add_dependency "logging"
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"
 end
