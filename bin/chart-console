@@ -4,6 +4,7 @@ begin
   require 'optparse'
   require 'chart'
   require 'irb'
+  require 'shellwords'
 
   options = Chart.options(
     :mode => :console,
@@ -33,6 +34,14 @@ options:
       exit
     end
 
+    opts.on("-p", "--print-cqlsh", "print cqlsh command") do
+      options[:mode] = :print_cqlsh
+    end
+
+    opts.on("-q", "--cqlsh", "launch cqlsh with argv") do
+      options[:mode] = :cqlsh
+    end
+
     opts.on("--version", "print version information") do |node|
       puts Chart.version
       exit
@@ -45,11 +54,28 @@ options:
     Chart.conn
   end
 
+  def config
+    Chart.config
+  end
+
   mode = options[:mode]
   case mode
   when :console
     ARGV.clear
     IRB.start(__FILE__)
+
+  when :cqlsh, :print_cqlsh
+    # don't use port as it is... maybe a different protocol? needs to be 9160
+    command = ["cqlsh", config[:hosts][0], "-k", config[:keyspace]]
+    command = command.map(&:to_s)
+    command = Shellwords.shelljoin(command + ARGV)
+
+    if mode == :print_cqlsh
+      puts command
+    else
+      exec command
+    end
+
   else
     rows = conn.execute(mode)
     rows.each {|row| puts row }

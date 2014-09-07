@@ -12,7 +12,7 @@ module Chart
   end
 
   def setup(options = {})
-    @connection = Env.setup(options)
+    @connection, @config = Env.setup(options)
   end
 
   def setup?
@@ -23,11 +23,16 @@ module Chart
     if setup?
       @connection.close
       @connection = nil
+      @config = nil
     end
   end
 
   def conn
     @connection or raise "connection is not setup"
+  end
+
+  def config
+    @config or raise "config is not setup"
   end
 
   def version

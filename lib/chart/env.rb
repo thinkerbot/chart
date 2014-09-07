@@ -54,7 +54,8 @@ module Chart
       logger.appenders = [:stderr]
       logger = Logging.logger[self]
 
-      Cql::Client.connect(config.merge(:logger => logger))
+      conn = Cql::Client.connect(config.merge(:logger => logger))
+      [conn, config]
     end
 
     def load_config(config_file = DATABASE_FILE, environment = ENVIRONMENT)
