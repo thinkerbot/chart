@@ -5,12 +5,14 @@ begin
   require 'chart'
   require 'irb'
 
-  options = Chart.options()
+  options = Chart.options(
+    :mode => :console,
+  )
   OptionParser.new do |opts|
     opts.banner = %{
 usage: chart-console [options]
 
-  Gives you a console with the cql connection set up as normal/
+  Gives you a console with the cql connection set up as normal.
 
     $ chart-console
     > conn.exec("select * from charts")
@@ -19,6 +21,10 @@ usage: chart-console [options]
 options:
 
 }.lstrip
+
+    opts.on("-e", "--exec QUERY", "execute query") do |value|
+      options[:mode] = value
+    end
 
     opts.on("-h", "--help", "print this help") do
       puts opts
@@ -34,11 +40,18 @@ options:
   end.parse!
 
   Chart.setup(options)
-  ARGV.clear
 
   def conn
     Chart.conn
   end
 
-  IRB.start(__FILE__)
+  mode = options[:mode]
+  case mode
+  when :console
+    ARGV.clear
+    IRB.start(__FILE__)
+  else
+    rows = conn.execute(mode)
+    rows.each {|row| puts row }
+  end
 end
