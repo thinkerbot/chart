@@ -1,15 +1,23 @@
+Chart.poll_num = 0;
 Chart.fetch = function () {
-  d3.json(Chart.transport_url, function (error, json) {
-    if (typeof json == 'undefined') {
+  d3.csv(Chart.fetch_url + '?n=' + Chart.poll_num).row(function(d) {
+    d.key = Chart.topic.format(d.topic, d.z);
+    d.x = Chart.casters.x(d.x);
+    d.y = Chart.casters.y(d.y);
+    d.z = Chart.casters.z(d.z);
+    return d;
+  }).get(function(error, rows) {
+    if (typeof rows == 'undefined') {
       alert(error.statusText);
-    } else if (typeof json.data == 'undefined') {
-      Chart.shutdown();
+    } else if (rows.length == 0) {
+      Chart.no_more_data();
     } else {
-      Chart.json = json;
-      Chart.render(json);
-      setTimeout(Chart.fetch, 0);
+      Chart.rows = rows;
+      Chart.render(Chart.config, Chart.rows);
+      setTimeout(Chart.fetch, 1000);
     };
   });
+  Chart.poll_num = Chart.poll_num + 1;
 };
 
 Chart.fetch();

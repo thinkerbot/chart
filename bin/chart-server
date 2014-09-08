@@ -3,10 +3,10 @@ begin
   require 'optparse'
   require 'chart/server'
 
-  options = {
+  options = Chart.options(
     :port     => 4567,
     :bind     => "0.0.0.0",
-  }
+  )
   OptionParser.new do |opts|
     opts.banner = %{
 usage: chart-server [options]
@@ -32,6 +32,9 @@ options:
     end
   end.parse!
 
+  Chart.setup(options)
+
+  Chart::Server.set :conn, Chart.conn
   Chart::Server.run!
 
 rescue Interrupt

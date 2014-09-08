@@ -24,35 +24,17 @@
     <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
     <script>window.d3 || document.write('<script src="js/vendor/d3.v3.min.js"><\/script>')</script>
     <script src="js/plugins.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/main.js"></script><% if defined?(chart) %>
     <script>
-      Chart = {};
-      Chart.config_url    = '<%= config_url %>';
-      Chart.transport_url = '<%= transport_url %>';
-      Chart.shutdown_url  = '<%= shutdown_url %>';
+      Chart = <%= config.to_json %>;
+      Chart.fetch_url = '<%= fetch_url(id, transport) %>';
 
-      Chart.configure = function () {
-        d3.json(Chart.config_url, function (error, json) {
-          if (typeof json == 'undefined') {
-            alert(error.statusText);
-          } else {
-            Chart.config = json;
-          };
-        });
-      };
-      Chart.configure();
-
-      Chart.shutdown = function () {
-        d3.json(Chart.shutdown_url, function (error, json) {
-          console.log("No more data");
-        });
-      };
-      window.onbeforeunload = function() {
-        Chart.shutdown();
+      Chart.no_more_data = function () {
+        console.log("No more data");
       };
 
 <%= erb :"charts/#{chart}.js" %>
 <%= erb :"transports/#{transport}.js" %>
-    </script>
+    </script><% end %>
   </body>
 </html>

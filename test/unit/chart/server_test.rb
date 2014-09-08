@@ -13,4 +13,9 @@ class Chart::ServerTest < Test::Unit::TestCase
     get '/'
     assert last_response.ok?
   end
+
+  def test_index_lists_charts_by_id
+    get '/'
+    assert last_response.ok?
+  end
 end
