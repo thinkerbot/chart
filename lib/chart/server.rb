@@ -29,7 +29,7 @@ module Chart
       ids = Config.list
       respond_to do |f|
         f.html { erb :index, :locals => {:ids => ids } }
-        f.json { ids }
+        f.json { {"ids" => ids}.to_json }
       end
     end
 

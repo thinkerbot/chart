@@ -1,0 +1,22 @@
+#!/bin/bash
+. test/integration/helper
+
+mkdir -p "tmp/pids"
+mkdir -p "log"
+chart-server -b "$APP_BIND" -p "$APP_PORT" --pidfile "tmp/pids/test.pid" > log/test.log 2>&1 &
+sleep 5
+
+test_basic_api () {
+chart-console -x "truncate charts"
+curl -s -X POST -H "Accept: application/json" "$APP_URL/example/a"
+curl -s -X POST -H "Accept: application/json" "$APP_URL/example/b"
+curl -s -H "Accept: application/json" "$APP_URL" | jq -r .ids[] | sort | assert_output "\
+example/a
+example/b
+"
+}
+
+
+. ts
+
+kill "$(cat tmp/pids/test.pid)"

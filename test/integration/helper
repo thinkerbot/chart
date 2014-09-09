@@ -1,5 +1,9 @@
 # Setup test paths
 export PATH="$PWD/vendor/ts/bin:$PATH"
+export APP_BIND="${APP_BIND:-0.0.0.0}"
+export APP_PORT="${APP_PORT:-4568}"
+export APP_URL="${APP_URL:-http://${APP_BIND}:${APP_PORT}}"
+export RACK_ENV="test"
 
 transpose () {
   tr "\n" " " | sed -e "s/ $//"

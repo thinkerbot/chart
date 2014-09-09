@@ -20,6 +20,10 @@ options:
       options[:bind] = value
     end
 
+    opts.on("-e", "--environment ENV", "environment (#{options[:environment]})") do |value|
+      options[:environment] = value
+    end
+
     opts.on("-h", "--help", "print this help") do
       puts opts
       puts
@@ -30,11 +34,19 @@ options:
     opts.on("-p", "--port PORT", "run on the specified port (#{options[:port]})") do |value|
       options[:port] = value
     end
+
+    opts.on("-P", "--pidfile FILE", "write pid to this file (currently does NOT daemonize)") do |value|
+      options[:pidfile] = value
+    end
   end.parse!
 
   Chart.setup(options)
 
-  Chart::Server.set :conn, Chart.conn
+  if pidfile = options[:pidfile]
+    File.open(pidfile, "w") {|io| io.puts Process.pid }
+  end
+
+  Chart::Server.set(options)
   Chart::Server.run!
 
 rescue Interrupt
