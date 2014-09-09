@@ -23,7 +23,7 @@ module Chart
 
     get('/')   { list }
     get('/*')  { show(params[:splat][0]) }
-    post('/*') { puts params.inspect; save(params[:splat][0], params[:config]) }
+    post('/*') { save(params[:splat][0], params[:configs], params[:force]) }
 
     def list
       ids = Config.list
@@ -33,8 +33,12 @@ module Chart
       end
     end
 
+    def find(id)
+      Config.find(id) || halt(404, "not found: #{id.inspect}")
+    end
+
     def show(id)
-      config = Config.find(id, settings.conn)
+      config = find(id)
       chart = "monitor"
       transport = "data"
 
@@ -49,12 +53,22 @@ module Chart
       end
     end
 
-    def save(id, configs_json)
-      if configs_json
-        config = Config.from_values([id, configs_json])
-        config.save
+    def save(id, configs_json, force)
+      configs = configs_json ? JSON.parse(configs_json) : {}
+      force   = force == "true"
+
+      if config = Config.find(id)
+        case
+        when configs.empty? || force
+          config.configs = configs
+          config.save
+        when config.configs == configs
+          # do nothing
+        else
+          halt 500, "cannot overwrite existing configs"
+        end
       else
-        config = Config.find(id)
+        config = Config.create(id, configs)
       end
 
       respond_to do |f|

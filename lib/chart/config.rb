@@ -12,7 +12,7 @@ module Chart
       def find(id)
         rows = connection.execute("select id, configs from charts where id = ?", id)
         row = rows.first
-        row ? from_values(row.values) : raise("not found: #{id.inspect}")
+        row ? from_values(row.values) : nil
       end
 
       def create(id, configs = {})
@@ -30,7 +30,7 @@ module Chart
     end
 
     attr_reader :id
-    attr_reader :configs
+    attr_accessor :configs
 
     def initialize(id, configs = {})
       @id = id
