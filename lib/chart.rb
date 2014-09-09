@@ -1,38 +1,28 @@
 require "chart/version"
-require "chart/parsers"
-require "chart/receivers"
-require "chart/senders"
-require "chart/env"
+require "chart/model"
 
 module Chart
   module_function
 
   def options(overrides = {})
-    Env.options(overrides)
+    Connection.options(overrides)
   end
 
   def setup(options = {})
-    @connection, @config = Env.setup(options)
+    Model.connect(options)
+    self
   end
 
   def setup?
-    @connection ? true : false
+    Model.connected?
   end
 
   def reset
-    if setup?
-      @connection.close
-      @connection = nil
-      @config = nil
-    end
+    Model.disconnect
   end
 
   def conn
-    @connection or raise "connection is not setup"
-  end
-
-  def config
-    @config or raise "config is not setup"
+    Model.connection
   end
 
   def version

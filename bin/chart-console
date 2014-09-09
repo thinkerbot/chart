@@ -8,6 +8,7 @@ begin
 
   options = Chart.options(
     :mode => :console,
+    :overrides => {}
   )
   OptionParser.new do |opts|
     opts.banner = %{
@@ -23,8 +24,16 @@ options:
 
 }.lstrip
 
-    opts.on("-e", "--exec QUERY", "execute query") do |value|
-      options[:mode] = value
+    opts.on("-H", "--hosts HOST[,HOST]", "override hosts config") do |value|
+      options[:overrides][:hosts] = value.split(',')
+    end
+
+    opts.on("-e", "--environment ENV", "environment (#{options[:environment]})") do |value|
+      options[:environment] = value
+    end
+
+    opts.on("-k", "--keyspace KEYSPACE", "override keyspace config") do |value|
+      options[:overrides][:keyspace] = value == '-' ? nil : value
     end
 
     opts.on("-h", "--help", "print this help") do
@@ -34,12 +43,24 @@ options:
       exit
     end
 
+    opts.on("-P", "--port PORT", "override port config") do |value|
+      options[:overrides][:port] = value
+    end
+
     opts.on("-p", "--print-cqlsh", "print cqlsh command") do
       options[:mode] = :print_cqlsh
     end
 
+    opts.on("--print-config", "print client config") do
+      options[:mode] = :print_config
+    end
+
     opts.on("-q", "--cqlsh", "launch cqlsh with argv") do
       options[:mode] = :cqlsh
+    end
+
+    opts.on("-x", "--execute QUERY", "execute query") do |value|
+      options[:mode] = value
     end
 
     opts.on("--version", "print version information") do |node|
@@ -47,7 +68,6 @@ options:
       exit
     end
   end.parse!
-
   Chart.setup(options)
 
   def conn
@@ -55,7 +75,7 @@ options:
   end
 
   def config
-    Chart.config
+    conn.config
   end
 
   mode = options[:mode]
@@ -64,9 +84,19 @@ options:
     ARGV.clear
     IRB.start(__FILE__)
 
+  when :print_config
+    print_config = {}
+    config.keys.map(&:to_s).sort.each do |key|
+      print_config[key] = config[key.to_sym]
+    end
+    puts print_config.to_yaml
+
   when :cqlsh, :print_cqlsh
     # don't use port as it is... maybe a different protocol? needs to be 9160
-    command = ["cqlsh", config[:hosts][0], "-k", config[:keyspace]]
+    command = ["cqlsh", config[:hosts][0]]
+    if keyspace = config[:keyspace]
+      command += ["-k", keyspace]
+    end
     command = command.map(&:to_s)
     command = Shellwords.shelljoin(command + ARGV)
 
@@ -77,6 +107,7 @@ options:
     end
 
   else
+    Chart.setup(options)
     rows = conn.execute(mode)
     rows.each {|row| puts row }
   end

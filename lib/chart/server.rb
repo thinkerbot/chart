@@ -26,7 +26,7 @@ module Chart
     post('/*') { puts params.inspect; save(params[:splat][0], params[:config]) }
 
     def list
-      ids = Config.list(settings.conn)
+      ids = Config.list
       respond_to do |f|
         f.html { erb :index, :locals => {:ids => ids } }
         f.json { ids }
@@ -52,7 +52,7 @@ module Chart
     def save(id, configs_json)
       if configs_json
         config = Config.from_values([id, configs_json])
-        config.save(settings.conn)
+        config.save
       else
         config = Config.find(id)
       end

@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 require File.expand_path('../../helper', __FILE__)
 require 'chart/config'
 

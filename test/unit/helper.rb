@@ -6,7 +6,11 @@ Bundler.setup
 
 require 'test/unit'
 
-require 'chart'
-unless Chart.setup?
-  Chart.setup(:environment => ENV['RACK_ENV'])
+module ModelHelper
+  def setup
+    unless Chart::Model.connected?
+      Chart::Model.connect
+    end
+    super
+  end
 end

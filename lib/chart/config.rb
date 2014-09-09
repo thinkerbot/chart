@@ -1,17 +1,26 @@
+require 'chart/model'
 require 'json'
 
 module Chart
-  class Config
+  class Config < Model
     class << self
-      def list(conn)
-        rows = conn.execute("select id from charts")
+      def list
+        rows = connection.execute("select id from charts")
         rows.map {|row| row["id"] }
       end
 
-      def find(id, conn)
-        rows = conn.execute("select id, configs from charts where id = ?", id)
+      def find(id)
+        rows = connection.execute("select id, configs from charts where id = ?", id)
         row = rows.first
         row ? from_values(row.values) : raise("not found: #{id.inspect}")
+      end
+
+      def create(id, configs = {})
+        new(id, configs).save
+      end
+
+      def delete_all
+        connection.execute("truncate charts")
       end
 
       def from_values(values)
@@ -36,8 +45,9 @@ module Chart
       configs[key] = value
     end
 
-    def save(conn)
-      conn.execute("insert into charts (id, configs) values (?, ?)", *to_values)
+    def save
+      connection.execute("insert into charts (id, configs) values (?, ?)", *to_values)
+      self
     end
 
     def to_json

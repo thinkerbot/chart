@@ -2,6 +2,9 @@
 begin
   require 'optparse'
   require 'chart'
+  require 'chart/parsers'
+  require 'chart/receivers'
+  require 'chart/senders'
   require 'json'
 
   options = {
