@@ -14,4 +14,6 @@ Setup config files:
 
 Migrate:
 
-   chart-console -q -k - < vm/setup.cql
+   chart-console -q -k - < vm/setup.cql  # one-time
+   chart-console -q < vm/tables.cql
+   chart-console -q -e test < vm/tables.cql
