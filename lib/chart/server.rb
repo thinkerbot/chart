@@ -22,6 +22,7 @@ module Chart
     # curl -H "Accept: application/json" http://localhost:4567/chart/two
 
     get('/')   { list }
+    get('/*/data') { data(params[:splat][0], params[:name], params[:xmin], params[:xmax]) }
     get('/*')  { show(params[:splat][0]) }
     post('/*') { save(params[:splat][0], params[:chart], params[:force]) }
 
@@ -81,6 +82,15 @@ module Chart
       respond_to do |f|
         f.html { redirect "/#{id}" }
         f.json { config.to_json }
+      end
+    end
+
+    def data(id, name, xmin, xmax)
+      config = Config.find(id)
+      data = config.find_data(name, xmin.to_i, xmax.to_i)
+      respond_to do |f|
+        f.html { data.inspect }
+        f.json { {'data' => data}.to_json }
       end
     end
 

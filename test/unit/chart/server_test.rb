@@ -110,4 +110,24 @@ class Chart::ServerTest < Test::Unit::TestCase
       ["two", 1, 1, 4]
     ], config.find_data("two", 0, 2)
   end
+
+  def test_get_data_returns_data_in_range_in_reverse_xz_order
+    config = Config.create("example/a")
+    config.save_data([
+      ["one", 1, 1, 0],
+      ["one", 1, 2, 1],
+      ["one", 2, 1, 2],
+      ["one", 2, 2, 3],
+      ["two", 1, 1, 4]
+    ])
+
+    get '/example/a/data?name=one&xmin=0&xmax=2'
+    json = JSON.parse(last_response.body)
+    assert_equal [
+      ["one", 2, 2, 3],
+      ["one", 2, 1, 2],
+      ["one", 1, 2, 1],
+      ["one", 1, 1, 0],
+    ], json
+  end
 end
