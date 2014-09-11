@@ -14,4 +14,8 @@ create table chart_data (
   z  varchar,
   y  varchar,
   primary key ((xp, id, n), x, z)
+)
+with clustering order by (
+  x desc,
+  z desc
 );
