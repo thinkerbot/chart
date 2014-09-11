@@ -23,7 +23,7 @@ module Chart
 
     get('/')   { list }
     get('/*')  { show(params[:splat][0]) }
-    post('/*') { save(params[:splat][0], params[:configs], params[:force]) }
+    post('/*') { save(params[:splat][0], params[:chart], params[:force]) }
 
     def list
       ids = Config.list
@@ -53,9 +53,12 @@ module Chart
       end
     end
 
-    def save(id, configs_json, force)
-      configs = configs_json ? JSON.parse(configs_json) : {}
-      force   = force == "true"
+    def save(id, chart_json, force)
+      chart = chart_json ? JSON.parse(chart_json) : {}
+      force = force == "true"
+
+      configs = chart["configs"] || {}
+      data    = chart["data"]
 
       if config = Config.find(id)
         case
@@ -69,6 +72,10 @@ module Chart
         end
       else
         config = Config.create(id, configs)
+      end
+
+      if data
+        config.save_data(data)
       end
 
       respond_to do |f|

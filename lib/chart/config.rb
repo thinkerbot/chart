@@ -21,6 +21,7 @@ module Chart
 
       def delete_all
         connection.execute("truncate charts")
+        connection.execute("truncate chart_data")
       end
 
       def from_values(values)
@@ -48,6 +49,30 @@ module Chart
     def save
       connection.execute("insert into charts (id, configs) values (?, ?)", *to_values)
       self
+    end
+
+    def calc_xp(x)
+      x / 100000
+    end
+
+    def calc_xps(xmin, xmax)
+      calc_xp(xmin).upto(calc_xp(xmax))
+    end
+
+    def find_data(n, xmin, xmax)
+      data = []
+      calc_xps(xmin, xmax).each do |xp|
+        rows = connection.execute("select n, x, y, z from chart_data where xp = ? and id = ? and n = ? and x > ? and x <= ?", xp, id, n, xmin, xmax)
+        rows.each {|row| data << row.values }
+      end
+      data
+    end
+
+    def save_data(data)
+      data.each do |n, x, y, z|
+        xp = calc_xp(x)
+        connection.execute("insert into chart_data (xp, id, n, x, y, z) values (?, ?, ?, ?, ?, ?)", xp, id, n, x, y, z)
+      end
     end
 
     def to_json

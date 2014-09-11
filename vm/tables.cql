@@ -7,12 +7,12 @@ create table charts (
 
 drop table if exists chart_data;
 create table chart_data (
-  xp varchar,
+  xp varint,
   id varchar,
   n  varchar,
-  x  varchar,
-  z  varchar,
-  y  varchar,
+  x  varint,
+  z  varint,
+  y  varint,
   primary key ((xp, id, n), x, z)
 )
 with clustering order by (
