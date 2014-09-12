@@ -67,10 +67,12 @@ module Chart
 
     attr_reader :config
     attr_reader :logger
+    attr_reader :prepared_statements
 
     def initialize(config)
       @config = config
       @logger = Logging.logger[self]
+      @prepared_statements = Hash.new {|hash, cql| hash[cql] = client.prepare(cql) }
     end
 
     def client
@@ -81,8 +83,9 @@ module Chart
       @client.close if @client
     end
 
-    def execute(*args)
-      client.execute(*args)
+    def execute(cql, *args)
+      statement = @prepared_statements[cql]
+      statement.execute(*args)
     end
   end
 end
