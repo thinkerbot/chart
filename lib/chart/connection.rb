@@ -85,6 +85,7 @@ module Chart
 
     def execute(cql, *args)
       statement = @prepared_statements[cql]
+      logger.debug { "execute #{cql.inspect} #{args.inspect}"}
       statement.execute(*args)
     end
   end
