@@ -41,11 +41,6 @@ module Chart
         new(id, config).save
       end
 
-      def delete_all
-        connection.execute("truncate topics")
-        connection.execute("truncate iii_data")
-      end
-
       def from_values(values)
         id, config_json = values
         new(id, config_json ? JSON.parse(config_json) : {})

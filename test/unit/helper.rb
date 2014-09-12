@@ -6,7 +6,13 @@ Bundler.setup
 
 require 'test/unit'
 
-module ModelHelper
+module TopicHelper
+  TEST_RUN_TIME = Time.now.strftime("%Y%m%d%H%M%S")
+
+  def test_topic_id(*suffix)
+    File.join(TEST_RUN_TIME, __name__, *suffix)
+  end
+
   def setup
     unless Chart::Topic.connected?
       Chart::Topic.connect
