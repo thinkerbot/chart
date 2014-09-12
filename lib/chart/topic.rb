@@ -116,10 +116,17 @@ module Chart
       self
     end
 
-    def find_data(xmin, xmax)
+    def find_data(xmin, xmax, boundary = '[]')
       data = []
       x_type.pkeys_for_range(xmin, xmax).each do |xp|
-        rows = connection.execute("select x, y, z from #{data_table} where xp = ? and id = ? and x > ? and x <= ?", xp, id, xmin, xmax)
+        rows = \
+        case boundary
+        when "[]" then connection.execute("select x, y, z from #{data_table} where xp = ? and id = ? and x >= ? and x <= ?", xp, id, xmin, xmax)
+        when "[)" then connection.execute("select x, y, z from #{data_table} where xp = ? and id = ? and x >= ? and x <  ?", xp, id, xmin, xmax)
+        when "(]" then connection.execute("select x, y, z from #{data_table} where xp = ? and id = ? and x >  ? and x <= ?", xp, id, xmin, xmax)
+        when "()" then connection.execute("select x, y, z from #{data_table} where xp = ? and id = ? and x >  ? and x <  ?", xp, id, xmin, xmax)
+        else raise "invalid boundary condition: #{boundary.inspect}"
+        end
         rows.each {|row| data << row.values }
       end
       data

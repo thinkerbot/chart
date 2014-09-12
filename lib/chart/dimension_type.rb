@@ -24,6 +24,24 @@ module Chart
       raise NotImplementedError
     end
 
+    def offset(value, period_str)
+      raise NotImplementedError
+    end
+
+    def parse(range_str)
+      case range_str
+      when /^(\[|\()(.+?),(.+?)(\]|\))$/
+        [deserialize($2), deserialize($3), $1 + $4]
+      when /^(\[|\()(.+?):(.+?)(\]|\))$/
+        min = deserialize($2)
+        max = offset(min, $3)
+        min <= max ? [min, max, $1 + $4] : [max, min, $1 + $4]
+      else
+        min = deserialize(range_str)
+        [min, min, '[]']
+      end
+    end
+
     def pkey(value)
       raise NotImplementedError
     end

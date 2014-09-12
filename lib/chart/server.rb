@@ -22,7 +22,7 @@ module Chart
     # curl -H "Accept: application/json" http://localhost:4567/chart/two
 
     get('/')   { list }
-    get('/*/data') { data(params[:splat][0], params[:xmin], params[:xmax]) }
+    get('/*/data') { data(params[:splat][0], params[:x]) }
     get('/*')  { show(params[:splat][0]) }
     post('/*') { save(params[:splat][0], params[:topic], params[:force]) }
 
@@ -86,9 +86,10 @@ module Chart
       end
     end
 
-    def data(id, xmin, xmax)
+    def data(id, range_str)
       topic = Topic.find(id)
-      data = topic.find_data(xmin.to_i, xmax.to_i)
+      range = topic.x_type.parse(range_str)
+      data  = topic.find_data(*range)
       respond_to do |f|
         f.html { data.inspect }
         f.json { {'data' => data}.to_json }

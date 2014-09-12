@@ -23,6 +23,10 @@ module Chart
         value.to_s
       end
 
+      def offset(value, period_str)
+        value + deserialize(period_str)
+      end
+
       def pkey(value)
         value / bucket_size
       end
