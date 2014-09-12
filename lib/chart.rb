@@ -1,5 +1,5 @@
 require "chart/version"
-require "chart/model"
+require "chart/topic"
 
 module Chart
   module_function
@@ -9,20 +9,20 @@ module Chart
   end
 
   def setup(options = {})
-    Model.connect(options)
+    Topic.connect(options)
     self
   end
 
   def setup?
-    Model.connected?
+    Topic.connected?
   end
 
   def reset
-    Model.disconnect
+    Topic.disconnect
   end
 
   def conn
-    Model.connection
+    Topic.connection
   end
 
   def version

@@ -26,7 +26,7 @@
     <script src="js/plugins.js"></script>
     <script src="js/main.js"></script><% if defined?(chart) %>
     <script>
-      Chart = <%= config.to_json %>;
+      Chart = <%= topic.to_json %>;
       Chart.fetch_url = '<%= fetch_url(id, transport) %>';
 
       Chart.no_more_data = function () {

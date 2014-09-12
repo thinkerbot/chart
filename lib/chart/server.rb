@@ -2,7 +2,7 @@ require 'sinatra/base'
 require 'sinatra/contrib'
 require 'json'
 require 'chart'
-require 'chart/config'
+require 'chart/topic'
 
 module Chart
   class Server < Sinatra::Base
@@ -22,12 +22,12 @@ module Chart
     # curl -H "Accept: application/json" http://localhost:4567/chart/two
 
     get('/')   { list }
-    get('/*/data') { data(params[:splat][0], params[:name], params[:xmin], params[:xmax]) }
+    get('/*/data') { data(params[:splat][0], params[:xmin], params[:xmax]) }
     get('/*')  { show(params[:splat][0]) }
-    post('/*') { save(params[:splat][0], params[:chart], params[:force]) }
+    post('/*') { save(params[:splat][0], params[:topic], params[:force]) }
 
     def list
-      ids = Config.list
+      ids = Topic.list
       respond_to do |f|
         f.html { erb :index, :locals => {:ids => ids } }
         f.json { {"ids" => ids}.to_json }
@@ -35,11 +35,11 @@ module Chart
     end
 
     def find(id)
-      Config.find(id) || halt(404, "not found: #{id.inspect}")
+      Topic.find(id) || halt(404, "not found: #{id.inspect}")
     end
 
     def show(id)
-      config = find(id)
+      topic = find(id)
       chart = "monitor"
       transport = "data"
 
@@ -48,46 +48,47 @@ module Chart
           :id => id,
           :chart => chart,
           :transport => transport,
-          :config => config
+          :topic => topic
         } }
-        f.json { config.to_json }
+        f.json { topic.to_json }
       end
     end
 
-    def save(id, chart_json, force)
-      chart = chart_json ? JSON.parse(chart_json) : {}
+    def save(id, attrs_json, force)
+      attrs = attrs_json ? JSON.parse(attrs_json) : {}
       force = force == "true"
 
-      configs = chart["configs"] || {}
-      data    = chart["data"]
+      config = attrs["config"] || {}
+      data   = attrs["data"]
 
-      if config = Config.find(id)
+      if topic = Topic.find(id)
         case
-        when configs.empty? || force
-          config.configs = configs
-          config.save
-        when config.configs == configs
+        when config.empty? || force
+          topic.config = config
+          topic.save
+        when topic.config == config
           # do nothing
         else
-          halt 500, "cannot overwrite existing configs"
+          halt 500, "cannot overwrite existing config"
         end
       else
-        config = Config.create(id, configs)
+        topic = Topic.create(id, config)
       end
 
       if data
-        config.save_data(data)
+        data = topic.deserialize_data(data)
+        topic.save_data(data)
       end
 
       respond_to do |f|
         f.html { redirect "/#{id}" }
-        f.json { config.to_json }
+        f.json { topic.to_json }
       end
     end
 
-    def data(id, name, xmin, xmax)
-      config = Config.find(id)
-      data = config.find_data(name, xmin.to_i, xmax.to_i)
+    def data(id, xmin, xmax)
+      topic = Topic.find(id)
+      data = topic.find_data(xmin.to_i, xmax.to_i)
       respond_to do |f|
         f.html { data.inspect }
         f.json { {'data' => data}.to_json }

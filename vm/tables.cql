@@ -1,19 +1,18 @@
-drop table if exists charts;
-create table charts (
-  id      varchar,
-  configs varchar,
+drop table if exists topics;
+create table topics (
+  id     varchar,
+  config varchar,
   primary key (id)
 );
 
-drop table if exists chart_data;
-create table chart_data (
+drop table if exists iii_data;
+create table iii_data (
   xp varint,
   id varchar,
-  n  varchar,
   x  varint,
   z  varint,
   y  varint,
-  primary key ((xp, id, n), x, z)
+  primary key ((xp, id), x, z)
 )
 with clustering order by (
   x desc,

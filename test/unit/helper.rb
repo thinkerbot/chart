@@ -8,8 +8,8 @@ require 'test/unit'
 
 module ModelHelper
   def setup
-    unless Chart::Model.connected?
-      Chart::Model.connect
+    unless Chart::Topic.connected?
+      Chart::Topic.connect
     end
     super
   end

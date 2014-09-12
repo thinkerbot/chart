@@ -7,11 +7,11 @@ class Chart::ServerTest < Test::Unit::TestCase
   include Rack::Test::Methods
   include ModelHelper
 
-  Config = Chart::Config
+  Topic = Chart::Topic
 
   def setup
     super
-    Config.delete_all
+    Topic.delete_all
   end
 
   def app
@@ -27,9 +27,9 @@ class Chart::ServerTest < Test::Unit::TestCase
     assert last_response.ok?
   end
 
-  def test_index_lists_charts_by_id
-    Config.create("example/a")
-    Config.create("example/b")
+  def test_index_lists_topics_by_id
+    Topic.create("example/a")
+    Topic.create("example/b")
 
     get '/'
     assert last_response.body.include?("example/a")
@@ -40,94 +40,88 @@ class Chart::ServerTest < Test::Unit::TestCase
   # show
   #
 
-  def test_get_existing_chart_returns_ok
-    Config.create("example/a")
+  def test_get_existing_topic_returns_ok
+    Topic.create("example/a")
     get '/example/a'
     assert last_response.ok?
   end
 
-  def test_get_non_existant_chart_returns_404
+  def test_get_non_existant_topic_returns_404
     get '/example/a'
     assert_equal 404, last_response.status
   end
 
   #
-  # create/update configs
+  # create/update config
   #
 
   ## config
 
-  def test_post_to_chart_id_creates_chart
-    assert_equal nil, Config.find("example/a")
+  def test_post_to_topic_id_creates_topic
+    assert_equal nil, Topic.find("example/a")
     post '/example/a'
-    assert_equal "example/a", Config.find("example/a").id
+    assert_equal "example/a", Topic.find("example/a").id
   end
 
-  def test_post_to_chart_id_with_configs_creates_chart_with_configs
-    post '/example/a', :chart => {:configs => {"a" => "A"}}.to_json
-    assert_equal "A", Config.find("example/a").configs["a"]
+  def test_post_to_topic_id_with_config_creates_topic_with_config
+    post '/example/a', :topic => {:config => {"a" => "A"}}.to_json
+    assert_equal "A", Topic.find("example/a").config["a"]
   end
 
-  def test_post_to_existing_chart_id_with_config_updates_causes_error_and_does_nothing
-    post '/example/a', :chart => {:configs => {"a" => "A"}}.to_json
-    post '/example/a', :chart => {:configs => {"a" => "B"}}.to_json
+  def test_post_to_existing_topic_id_with_config_updates_causes_error_and_does_nothing
+    post '/example/a', :topic => {:config => {"a" => "A"}}.to_json
+    post '/example/a', :topic => {:config => {"a" => "B"}}.to_json
     assert !last_response.ok?
-    assert_equal "A", Config.find("example/a").configs["a"]
+    assert_equal "A", Topic.find("example/a").config["a"]
   end
 
-  def test_post_to_existing_chart_id_with_existing_configs_does_nothing
-    post '/example/a', :chart => {:configs => {"a" => "A"}}.to_json
-    post '/example/a', :chart => {:configs => {"a" => "A"}}.to_json
-    assert_equal "A", Config.find("example/a").configs["a"]
+  def test_post_to_existing_topic_id_with_existing_config_does_nothing
+    post '/example/a', :topic => {:config => {"a" => "A"}}.to_json
+    post '/example/a', :topic => {:config => {"a" => "A"}}.to_json
+    assert_equal "A", Topic.find("example/a").config["a"]
   end
 
-  def test_post_to_existing_chart_id_with_configs_updates_configs_if_force
-    post '/example/a', :chart => {:configs => {"a" => "A"}}.to_json
-    post '/example/a', :chart => {:configs => {"a" => "B"}}.to_json, :force => "true"
-    assert_equal "B", Config.find("example/a").configs["a"]
+  def test_post_to_existing_topic_id_with_config_updates_config_if_force
+    post '/example/a', :topic => {:config => {"a" => "A"}}.to_json
+    post '/example/a', :topic => {:config => {"a" => "B"}}.to_json, :force => "true"
+    assert_equal "B", Topic.find("example/a").config["a"]
   end
 
   ## data
 
-  def test_post_to_chart_id_with_data_saves_data_in_reverse_xz_order
-    post '/example/a', :chart => {:data => [
-      ["one", 1, 1, 0],
-      ["one", 1, 2, 1],
-      ["one", 2, 1, 2],
-      ["one", 2, 2, 3],
-      ["two", 1, 1, 4]
+  def test_post_to_topic_id_with_data_saves_data_in_reverse_xz_order
+    post '/example/a', :topic => {:data => [
+      [1, 1, 0],
+      [1, 2, 1],
+      [2, 1, 2],
+      [2, 2, 3],
     ]}.to_json
 
-    config = Config.find("example/a")
+    topic = Topic.find("example/a")
     assert_equal [
-      ["one", 2, 2, 3],
-      ["one", 2, 1, 2],
-      ["one", 1, 2, 1],
-      ["one", 1, 1, 0],
-    ], config.find_data("one", 0, 2)
-
-    assert_equal [
-      ["two", 1, 1, 4]
-    ], config.find_data("two", 0, 2)
+      [2, 2, 3],
+      [2, 1, 2],
+      [1, 2, 1],
+      [1, 1, 0],
+    ], topic.find_data(0, 2)
   end
 
   def test_get_data_returns_data_in_range_in_reverse_xz_order
-    config = Config.create("example/a")
-    config.save_data([
-      ["one", 1, 1, 0],
-      ["one", 1, 2, 1],
-      ["one", 2, 1, 2],
-      ["one", 2, 2, 3],
-      ["two", 1, 1, 4]
+    topic = Topic.create("example/a")
+    topic.save_data([
+      [1, 1, 0],
+      [1, 2, 1],
+      [2, 1, 2],
+      [2, 2, 3],
     ])
 
-    get '/example/a/data?name=one&xmin=0&xmax=2'
+    get '/example/a/data?&xmin=0&xmax=2'
     json = JSON.parse(last_response.body)
     assert_equal [
-      ["one", 2, 2, 3],
-      ["one", 2, 1, 2],
-      ["one", 1, 2, 1],
-      ["one", 1, 1, 0],
+      [2, 2, 3],
+      [2, 1, 2],
+      [1, 2, 1],
+      [1, 1, 0],
     ], json
   end
 end
