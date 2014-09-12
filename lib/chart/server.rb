@@ -21,10 +21,10 @@ module Chart
     # curl -X POST -F 'config={"x":"X"}' -H "Accept: application/json" http://localhost:4567/chart/two
     # curl -H "Accept: application/json" http://localhost:4567/chart/two
 
-    get('/')   { list }
-    get('/*/data') { data(params[:splat][0], params[:x]) }
-    get('/*')  { show(params[:splat][0]) }
-    post('/*') { save(params[:splat][0], params[:topic], params[:force]) }
+    get('/topics')    { list }
+    get('/topics/*')  { show(params[:splat][0]) }
+    post('/topics/*') { save(params[:splat][0], params[:topic], params[:force]) }
+    get('/data/*')    { data(params[:splat][0], params[:x]) }
 
     def list
       ids = Topic.list

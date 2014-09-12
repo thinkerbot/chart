@@ -9,9 +9,9 @@ sleep 5
 
 test_basic_api () {
 chart-console -x "truncate charts"
-curl -s -X POST -H "Accept: application/json" "$APP_URL/example/a"
-curl -s -X POST -H "Accept: application/json" "$APP_URL/example/b"
-curl -s -H "Accept: application/json" "$APP_URL" | jq -r .ids[] | sort | assert_output "\
+curl -s -X POST -H "Accept: application/json" "$APP_URL/topics/example/a"
+curl -s -X POST -H "Accept: application/json" "$APP_URL/topics/example/b"
+curl -s -H "Accept: application/json" "$APP_URL"/topics | jq -r .ids[] | sort | assert_output "\
 example/a
 example/b
 "
