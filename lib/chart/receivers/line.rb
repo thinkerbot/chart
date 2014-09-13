@@ -1,3 +1,5 @@
+require 'chart/topic'
+
 module Chart
   module Receivers
     class Line
@@ -12,15 +14,7 @@ module Chart
 
       def guess_config_for(topic)
         data = data_for(topic)
-        dimensions = data.first.map do |field|
-          case field
-          when /^\d+$/ then "i"
-          when /^\d+\.\d+$/ then "d"
-          when /^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$/ then "t"
-          else "s"
-          end
-        end
-        {"dimensions" => dimensions}
+        Topic.guess_config_for(data)
       end
 
       def data_for(topic, new_data = nil)
