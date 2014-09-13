@@ -1,3 +1,4 @@
+require 'chart/dimension_types'
 require 'logging'
 require 'cql'
 require 'yaml'
@@ -7,6 +8,19 @@ module Chart
     PROJECT_ROOT = File.expand_path("../../..", __FILE__)
     LOG_LEVELS   = %w{debug info warn error}
     Logging.init LOG_LEVELS
+
+    DATA_TABLES = {}
+    DATA_SIGNATURES = [
+      [DimensionTypes::IntegerType,   DimensionTypes::IntegerType,  DimensionTypes::IntegerType],
+      [DimensionTypes::DoubleType,    DimensionTypes::DoubleType,   DimensionTypes::DoubleType],
+      [DimensionTypes::TimestampType, DimensionTypes::IntegerType,  DimensionTypes::TimestampType],
+      [DimensionTypes::TimestampType, DimensionTypes::DoubleType,   DimensionTypes::TimestampType],
+      [DimensionTypes::TimestampType, DimensionTypes::VarcharType,  DimensionTypes::TimestampType],
+    ]
+    DATA_SIGNATURES.each do |dimensions|
+      signature = dimensions.map(&:signature).join
+      DATA_TABLES[dimensions] = "#{signature}_data"
+    end
 
     class << self
       def options(overrides = {})

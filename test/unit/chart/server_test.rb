@@ -13,6 +13,10 @@ class Chart::ServerTest < Test::Unit::TestCase
     Chart::Server
   end
 
+  def parse_data(str)
+    JSON.parse(str)['data']
+  end
+
   #
   # list
   #
@@ -125,59 +129,122 @@ class Chart::ServerTest < Test::Unit::TestCase
 
   def test_get_data_returns_data_in_bucket_in_reverse_xz_order
     create_iii_topic
+    header "Accept", "application/json"
 
     get "/data/#{test_topic_id}?x=1"
-    json = JSON.parse(last_response.body)
     assert_equal [
       [1, 2, 3],
       [1, 1, 2],
-    ], json
+    ], parse_data(last_response.body)
   end
 
   def test_get_data_returns_data_in_min_max_range_in_reverse_xz_order
     create_iii_topic
+    header "Accept", "application/json"
 
     get "/data/#{test_topic_id}?x=[1,2]"
-    assert_equal reverse_data_from_1_to_2, JSON.parse(last_response.body)
+    assert_equal reverse_data_from_1_to_2, parse_data(last_response.body)
 
     get "/data/#{test_topic_id}?x=[1,3)"
-    assert_equal reverse_data_from_1_to_2, JSON.parse(last_response.body)
+    assert_equal reverse_data_from_1_to_2, parse_data(last_response.body)
 
     get "/data/#{test_topic_id}?x=(0,2]"
-    assert_equal reverse_data_from_1_to_2, JSON.parse(last_response.body)
+    assert_equal reverse_data_from_1_to_2, parse_data(last_response.body)
 
     get "/data/#{test_topic_id}?x=(0,3)"
-    assert_equal reverse_data_from_1_to_2, JSON.parse(last_response.body)
+    assert_equal reverse_data_from_1_to_2, parse_data(last_response.body)
   end
 
   def test_get_data_returns_data_in_min_offset_range_in_reverse_xz_order
     create_iii_topic
+    header "Accept", "application/json"
 
     # plus
     get "/data/#{test_topic_id}?x=[1:1]"
-    assert_equal reverse_data_from_1_to_2, JSON.parse(last_response.body)
+    assert_equal reverse_data_from_1_to_2, parse_data(last_response.body)
 
     get "/data/#{test_topic_id}?x=[1:2)"
-    assert_equal reverse_data_from_1_to_2, JSON.parse(last_response.body)
+    assert_equal reverse_data_from_1_to_2, parse_data(last_response.body)
 
     get "/data/#{test_topic_id}?x=(0:2]"
-    assert_equal reverse_data_from_1_to_2, JSON.parse(last_response.body)
+    assert_equal reverse_data_from_1_to_2, parse_data(last_response.body)
 
     get "/data/#{test_topic_id}?x=(0:3)"
-    assert_equal reverse_data_from_1_to_2, JSON.parse(last_response.body)
+    assert_equal reverse_data_from_1_to_2, parse_data(last_response.body)
 
     # minus
     get "/data/#{test_topic_id}?x=[2:-1]"
-    assert_equal reverse_data_from_1_to_2, JSON.parse(last_response.body)
+    assert_equal reverse_data_from_1_to_2, parse_data(last_response.body)
 
     get "/data/#{test_topic_id}?x=[3:-2)"
-    assert_equal reverse_data_from_1_to_2, JSON.parse(last_response.body)
+    assert_equal reverse_data_from_1_to_2, parse_data(last_response.body)
 
     get "/data/#{test_topic_id}?x=(2:-2]"
-    assert_equal reverse_data_from_1_to_2, JSON.parse(last_response.body)
+    assert_equal reverse_data_from_1_to_2, parse_data(last_response.body)
 
     get "/data/#{test_topic_id}?x=(3:-3)"
-    assert_equal reverse_data_from_1_to_2, JSON.parse(last_response.body)
+    assert_equal reverse_data_from_1_to_2, parse_data(last_response.body)
   end
 
+  ### data types
+
+  def test_post_iii_data
+    header "Accept", "application/json"
+
+    post "/topics/#{test_topic_id}", :topic => {
+      :config => {:dimensions => ["i", "i", "i"]},
+      :data => [[0, 1, -2]]
+    }.to_json
+
+    get "/data/#{test_topic_id}?x=0"
+    assert_equal [[0, 1, -2]], parse_data(last_response.body)
+  end
+
+  def test_post_ddd_data
+    header "Accept", "application/json"
+
+    post "/topics/#{test_topic_id}", :topic => {
+      :config => {:dimensions => ["d", "d", "d"]},
+      :data => [[0.0, 1.1, -2.2]]
+    }.to_json
+
+    get "/data/#{test_topic_id}?x=0.0"
+    assert_equal [[0.0, 1.1, -2.2]], parse_data(last_response.body)
+  end
+
+  def test_post_tit_data
+    header "Accept", "application/json"
+
+    post "/topics/#{test_topic_id}", :topic => {
+      :config => {:dimensions => ["t", "i", "t"]},
+      :data => [["2010-01-01T00:00:00Z", 1, "2011-01-01T00:00:00Z"]]
+    }.to_json
+
+    get "/data/#{test_topic_id}?x=2010-01-01T00:00:00Z"
+    assert_equal [["2010-01-01T00:00:00Z", 1, "2011-01-01T00:00:00Z"]], parse_data(last_response.body)
+  end
+
+  def test_post_tdt_data
+    header "Accept", "application/json"
+
+    post "/topics/#{test_topic_id}", :topic => {
+      :config => {:dimensions => ["t", "d", "t"]},
+      :data => [["2010-01-01T00:00:00Z", 1.1, "2011-01-01T00:00:00Z"]]
+    }.to_json
+
+    get "/data/#{test_topic_id}?x=2010-01-01T00:00:00Z"
+    assert_equal [["2010-01-01T00:00:00Z", 1.1, "2011-01-01T00:00:00Z"]], parse_data(last_response.body)
+  end
+
+  def test_post_tst_data
+    header "Accept", "application/json"
+
+    post "/topics/#{test_topic_id}", :topic => {
+      :config => {:dimensions => ["t", "s", "t"]},
+      :data => [["2010-01-01T00:00:00Z", "true", "2011-01-01T00:00:00Z"]]
+    }.to_json
+
+    get "/data/#{test_topic_id}?x=2010-01-01T00:00:00Z"
+    assert_equal [["2010-01-01T00:00:00Z", "true", "2011-01-01T00:00:00Z"]], parse_data(last_response.body)
+  end
 end

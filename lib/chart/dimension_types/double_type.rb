@@ -2,23 +2,23 @@ require 'chart/dimension_type'
 
 module Chart
   module DimensionTypes
-    class IntegerType < DimensionType
+    class DoubleType < DimensionType
       class << self
         def default_bucket_size
           100000
         end
 
         def signature
-          "i"
+          "d"
         end
 
         def typestr
-          "varint"
+          "double"
         end
       end
 
       def deserialize(str)
-        Integer(str)
+        Float(str)
       end
 
       def serialize(value)
@@ -30,7 +30,7 @@ module Chart
       end
 
       def pkey(value)
-        value / bucket_size
+        (value / bucket_size).floor
       end
     end
   end

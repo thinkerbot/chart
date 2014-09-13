@@ -70,7 +70,6 @@ module Chart
     def config=(config)
       @config = config
       @dimension = nil
-      @dimension_signature = nil
       @data_table = nil
     end
 
@@ -80,15 +79,11 @@ module Chart
 
     def dimensions
       @dimensions ||= begin
-        dimension_types = config.fetch(:dimensions, [nil, nil, nil])
+        dimension_types = config.fetch("dimensions", [nil, nil, nil])
         dimension_types.map do |dimension_type|
           DimensionTypes.create(dimension_type)
         end
       end
-    end
-
-    def dimension_signature
-      @dimension_signature ||= @dimensions.map(&:signature).join
     end
 
     def x_type
@@ -108,7 +103,10 @@ module Chart
     #
 
     def data_table
-      @data_table ||= "#{dimension_signature}_data"
+      @data_table ||= begin
+        dimension_classes = dimensions.map(&:class)
+        Chart::Connection::DATA_TABLES[dimension_classes] or raise("unsupported dimension signature: #{dimension_classes.map(&:signature)}")
+      end
     end
 
     def save

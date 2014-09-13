@@ -1,36 +1,39 @@
 require 'chart/dimension_type'
+require 'timeseries/period'
+Time.zone = 'UTC'
 
 module Chart
   module DimensionTypes
-    class IntegerType < DimensionType
+    class TimestampType < DimensionType
       class << self
         def default_bucket_size
-          100000
+          1.day.to_i
         end
 
         def signature
-          "i"
+          "t"
         end
 
         def typestr
-          "varint"
+          "timestamp"
         end
       end
 
       def deserialize(str)
-        Integer(str)
+        Time.iso8601(str).in_time_zone
       end
 
       def serialize(value)
-        value
+        value.in_time_zone.iso8601
       end
 
       def offset(value, period_str)
-        value + deserialize(period_str)
+        period = Timeseries::Period.parse(period_str)
+        value.advance(period)
       end
 
       def pkey(value)
-        value / bucket_size
+        value.to_i / bucket_size
       end
     end
   end

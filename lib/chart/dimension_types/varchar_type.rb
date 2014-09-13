@@ -2,23 +2,23 @@ require 'chart/dimension_type'
 
 module Chart
   module DimensionTypes
-    class IntegerType < DimensionType
+    class VarcharType < DimensionType
       class << self
         def default_bucket_size
-          100000
+          nil
         end
 
         def signature
-          "i"
+          "s"
         end
 
         def typestr
-          "varint"
+          "varchar"
         end
       end
 
       def deserialize(str)
-        Integer(str)
+        str
       end
 
       def serialize(value)
@@ -26,11 +26,11 @@ module Chart
       end
 
       def offset(value, period_str)
-        value + deserialize(period_str)
+        raise "offsets aren't a thing for varchar type"
       end
 
       def pkey(value)
-        value / bucket_size
+        raise "using varchar as x isn't yet a thing"
       end
     end
   end

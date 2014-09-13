@@ -90,6 +90,7 @@ module Chart
       topic = Topic.find(id)
       range = topic.x_type.parse(range_str)
       data  = topic.find_data(*range)
+      data  = topic.serialize_data(data)
       respond_to do |f|
         f.html { data.inspect }
         f.json { {'data' => data}.to_json }

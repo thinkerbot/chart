@@ -1,0 +1,23 @@
+drop table if exists topics;
+create table topics (
+  id     varchar,
+  config varchar,
+  primary key (id)
+);
+<% require 'chart/connection' %>
+<% Chart::Connection::DATA_TABLES.each do |(x, y, z), table_name| %>
+
+drop table if exists <%= table_name %>;
+create table <%= table_name %> (
+  xp varint,
+  id varchar,
+  x  <%= x.typestr %>,
+  z  <%= z.typestr %>,
+  y  <%= y.typestr %>,
+  primary key ((xp, id), x, z)
+)
+with clustering order by (
+  x desc,
+  z desc
+);
+<% end %>

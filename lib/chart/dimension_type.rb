@@ -4,16 +4,20 @@ module Chart
       def default_bucket_size
         nil
       end
+
+      def signature
+        raise NotImplementedError
+      end
+
+      def typestr
+        raise NotImplementedError
+      end
     end
 
     attr_reader :bucket_size
 
     def initialize(bucket_size = self.class.default_bucket_size)
       @bucket_size = bucket_size
-    end
-
-    def signature
-      raise NotImplementedError
     end
 
     def deserialize(str)
