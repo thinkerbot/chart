@@ -50,6 +50,10 @@ options:
       end
     end
 
+    opts.on("-u", "--url URL", "sets base url") do |value|
+      options[:url] = value
+    end
+
     opts.on("-x", "--default-x VALUE", "sets default x value") do |value|
       options[:defaults][1] = lambda { value }
     end
@@ -72,7 +76,9 @@ options:
     :null_str => options[:null_str],
   )
   recvr  = Chart::Receivers.create(recvr_type)
-  sendr  = Chart::Senders.create(sendr_type)
+  sendr  = Chart::Senders.create(sendr_type,
+    :url => options[:url]
+  )
 
   while line = ARGF.gets
     line.chomp!("\n")

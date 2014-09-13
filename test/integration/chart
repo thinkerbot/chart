@@ -91,6 +91,22 @@ a _ 5 _
 }
 
 #
+# -u
+#
+
+test_chart_u_sets_base_url () {
+cat > "$infile" <<DOC
+a 1 2 3
+b 4 5 6
+DOC
+
+chart -u http://localhost:3000/topics "$infile" | assert_output "\
+http://localhost:3000/topics/a 1 2 3
+http://localhost:3000/topics/b 4 5 6
+"
+}
+
+#
 # -x
 #
 

@@ -1,9 +1,12 @@
+require 'chart/sender'
+
 module Chart
   module Senders
-    class Echo
+    class Echo < Sender
       def call(data)
         data.each do |nxyz|
-          puts nxyz.join(' ')
+          fields = nxyz.join(' ')
+          puts(url ? File.join(url, fields) : fields)
         end
       end
     end
