@@ -1,5 +1,4 @@
 require 'chart/senders/echo'
-require 'chart/senders/data'
 
 module Chart
   module Senders
@@ -9,8 +8,6 @@ module Chart
       case sendr_type
       when :echo
         Senders::Echo.new(options)
-      when :data
-        Senders::Data.new(options)
       else
         raise "unknown sendr type: #{sendr_type}"
       end
