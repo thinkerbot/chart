@@ -41,6 +41,43 @@ module Chart
         new(id, config).save
       end
 
+      def guess_config_for(data)
+        if data
+          signatures = data.map do |xyz|
+            xyz.map {|field| signature_for(field) }
+          end
+          dimensions = signatures.transpose.map do |field_signatures|
+            aggregate_signature(field_signatures)
+          end
+          if dimensions.uniq.sort == ["d", "i"]
+            dimensions = ["d", "d", "d"]
+          end
+        else
+          dimensions = ["i", "i", "i"]
+        end
+
+        {"dimensions" => dimensions}
+      end
+
+      def signature_for(field)
+        case
+        when field.kind_of?(Fixnum)  then "i"
+        when field.kind_of?(Numeric) then "d"
+        when field.kind_of?(String)
+          DimensionTypes::TimestampType.match(field) ? "t" : "s"
+        else raise "cannot guess signature for field: #{field.inspect}"
+        end
+      end
+
+      def aggregate_signature(signatures)
+        case signatures.uniq.sort
+        when ["i"] then "i"
+        when ["d", "i"], ["d"] then "d"
+        when ["t"] then "t"
+        else "s"
+        end
+      end
+
       def from_values(values)
         id, config_json = values
         new(id, config_json ? JSON.parse(config_json) : {})

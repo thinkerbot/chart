@@ -58,20 +58,21 @@ module Chart
       attrs = attrs_json ? JSON.parse(attrs_json) : {}
       force = force == "true"
 
-      config = attrs["config"] || {}
+      config = attrs["config"]
       data   = attrs["data"]
 
       if topic = Topic.find(id)
         case
-        when config.empty? || force
+        when config.nil? || config.empty? || topic.config == config
+          # do nothing
+        when force
           topic.config = config
           topic.save
-        when topic.config == config
-          # do nothing
         else
           halt 500, "cannot overwrite existing config"
         end
       else
+        config ||= Topic.guess_config_for(data)
         topic = Topic.create(id, config)
       end
 

@@ -17,10 +17,14 @@ module Chart
         def typestr
           "timestamp"
         end
+
+        def match(str)
+          (Time.iso8601(str) rescue false) ? true : false
+        end
       end
 
       def deserialize(str)
-        Time.iso8601(str).in_time_zone
+        Time.iso8601(str)
       end
 
       def serialize(value)

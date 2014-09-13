@@ -86,6 +86,53 @@ class Chart::ServerTest < Test::Unit::TestCase
     assert_equal "B", Topic.find(test_topic_id).config["a"]
   end
 
+  ### guess config
+
+  def test_post_guesses_config_from_data_if_unspecified
+    post "/topics/#{test_topic_id}", :topic => {:data => [[0, 1, -2]]}.to_json
+    assert_equal ["i", "i", "i"], Topic.find(test_topic_id).config["dimensions"]
+  end
+
+  def test_post_guesses_ddd_if_all_data_are_integer
+    post "/topics/#{test_topic_id}", :topic => {:data => [
+      [0, 1, -2],
+      [3, 4, -5],
+    ]}.to_json
+    assert_equal ["i", "i", "i"], Topic.find(test_topic_id).config["dimensions"]
+  end
+
+  def test_post_guesses_ddd_if_all_data_are_numeric_and_at_least_one_is_a_float
+    post "/topics/#{test_topic_id}", :topic => {:data => [
+      [0, 1.0, -2],
+      [3, 4, -5],
+    ]}.to_json
+    assert_equal ["d", "d", "d"], Topic.find(test_topic_id).config["dimensions"]
+  end
+
+  def test_post_guesses_tit_if_all_xz_are_iso8601_and_all_y_are_integer
+    post "/topics/#{test_topic_id}", :topic => {:data => [
+      ["2010-01-01T00:00:00.000Z", 1, "2010-01-01T00:00:00.000Z"],
+      ["2010-01-01T00:00:00.000Z", 4, "2010-01-01T00:00:00.000Z"],
+    ]}.to_json
+    assert_equal ["t", "i", "t"], Topic.find(test_topic_id).config["dimensions"]
+  end
+
+  def test_post_guesses_tdt_if_all_xz_are_iso8601_and_all_y_are_numeric_and_at_least_one_y_is_float
+    post "/topics/#{test_topic_id}", :topic => {:data => [
+      ["2010-01-01T00:00:00.000Z", 1.0, "2010-01-01T00:00:00.000Z"],
+      ["2010-01-01T00:00:00.000Z", 4,   "2010-01-01T00:00:00.000Z"],
+    ]}.to_json
+    assert_equal ["t", "d", "t"], Topic.find(test_topic_id).config["dimensions"]
+  end
+
+  def test_post_guesses_tst_if_all_xz_are_iso8601_and_all_y_are_string
+    post "/topics/#{test_topic_id}", :topic => {:data => [
+      ["2010-01-01T00:00:00.000Z", "1", "2010-01-01T00:00:00.000Z"],
+      ["2010-01-01T00:00:00.000Z", "4", "2010-01-01T00:00:00.000Z"],
+    ]}.to_json
+    assert_equal ["t", "s", "t"], Topic.find(test_topic_id).config["dimensions"]
+  end
+
   ## data
 
   def create_iii_topic
