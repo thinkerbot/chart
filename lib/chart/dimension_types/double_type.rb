@@ -15,6 +15,10 @@ module Chart
         def typestr
           "double"
         end
+
+        def match(str)
+          str =~ /^-?\d+\.\d+$/
+        end
       end
 
       def deserialize(str)

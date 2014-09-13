@@ -64,7 +64,12 @@ module Chart
         when field.kind_of?(Fixnum)  then "i"
         when field.kind_of?(Numeric) then "d"
         when field.kind_of?(String)
-          DimensionTypes::TimestampType.match(field) ? "t" : "s"
+          case
+          when DimensionTypes::IntegerType.match(field) then "i"
+          when DimensionTypes::DoubleType.match(field) then "d"
+          when DimensionTypes::TimestampType.match(field) then "t"
+          else "s"
+          end
         else raise "cannot guess signature for field: #{field.inspect}"
         end
       end

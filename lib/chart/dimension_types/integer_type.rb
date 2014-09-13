@@ -15,6 +15,10 @@ module Chart
         def typestr
           "varint"
         end
+
+        def match(str)
+          str =~ /^\-?\d+$/
+        end
       end
 
       def deserialize(str)

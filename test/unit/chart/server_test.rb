@@ -93,10 +93,18 @@ class Chart::ServerTest < Test::Unit::TestCase
     assert_equal ["i", "i", "i"], Topic.find(test_topic_id).config["dimensions"]
   end
 
-  def test_post_guesses_ddd_if_all_data_are_integer
+  def test_post_guesses_iii_if_all_data_are_integer
     post "/topics/#{test_topic_id}", :topic => {:data => [
       [0, 1, -2],
       [3, 4, -5],
+    ]}.to_json
+    assert_equal ["i", "i", "i"], Topic.find(test_topic_id).config["dimensions"]
+  end
+
+  def test_post_guesses_iii_if_all_data_are_integer_strings
+    post "/topics/#{test_topic_id}", :topic => {:data => [
+      ["0", "1", "-2"],
+      ["3", "4", "-5"],
     ]}.to_json
     assert_equal ["i", "i", "i"], Topic.find(test_topic_id).config["dimensions"]
   end
@@ -125,10 +133,10 @@ class Chart::ServerTest < Test::Unit::TestCase
     assert_equal ["t", "d", "t"], Topic.find(test_topic_id).config["dimensions"]
   end
 
-  def test_post_guesses_tst_if_all_xz_are_iso8601_and_all_y_are_string
+  def test_post_guesses_tst_if_all_xz_are_iso8601_and_all_y_are_non_numeric_string
     post "/topics/#{test_topic_id}", :topic => {:data => [
-      ["2010-01-01T00:00:00.000Z", "1", "2010-01-01T00:00:00.000Z"],
-      ["2010-01-01T00:00:00.000Z", "4", "2010-01-01T00:00:00.000Z"],
+      ["2010-01-01T00:00:00.000Z", "a", "2010-01-01T00:00:00.000Z"],
+      ["2010-01-01T00:00:00.000Z", "b", "2010-01-01T00:00:00.000Z"],
     ]}.to_json
     assert_equal ["t", "s", "t"], Topic.find(test_topic_id).config["dimensions"]
   end
