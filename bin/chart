@@ -82,13 +82,13 @@ options:
 
   while line = ARGF.gets
     line.chomp!("\n")
-    nxyz = parser.call(line)
-    data = recvr.call(nxyz)
-    sendr.call(data) if data
+    nxyz    = parser.call(line)
+    dataset = recvr.call(nxyz)
+    sendr.call(dataset) if dataset
   end
 
-  data = recvr.call(nil)
-  sendr.call(data) if data
+  dataset = recvr.call(nil)
+  sendr.call(dataset) if dataset
 
 rescue Interrupt
   exit 130
