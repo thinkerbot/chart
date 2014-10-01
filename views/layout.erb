@@ -27,14 +27,11 @@
     <script src="js/main.js"></script><% if defined?(chart) %>
     <script>
       Chart = <%= topic.to_json %>;
-      Chart.fetch_url = '<%= fetch_url(id, transport) %>';
 
       Chart.no_more_data = function () {
         console.log("No more data");
       };
 
-<%= erb :"charts/#{chart}.js" %>
-<%= erb :"transports/#{transport}.js" %>
     </script><% end %>
   </body>
 </html>

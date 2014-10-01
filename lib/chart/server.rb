@@ -21,10 +21,10 @@ module Chart
     # curl -X POST -F 'config={"x":"X"}' -H "Accept: application/json" http://localhost:4567/chart/two
     # curl -H "Accept: application/json" http://localhost:4567/chart/two
 
+    get('/')          { redirect '/topics' }
     get('/topics')    { list }
     get('/topics/*')  { show(params[:splat][0]) }
     post('/topics/*') { save(params[:splat][0], params[:topic], params[:force]) }
-    get('/data/*')    { data(params[:splat][0], params[:x]) }
 
     def list
       ids = Topic.list
@@ -40,14 +40,9 @@ module Chart
 
     def show(id)
       topic = find(id)
-      chart = "monitor"
-      transport = "data"
-
       respond_to do |f|
-        f.html { erb :"charts/#{chart}.html", :locals => {
+        f.html { erb :show, :locals => {
           :id => id,
-          :chart => chart,
-          :transport => transport,
           :topic => topic
         } }
         f.json { topic.to_json }
@@ -55,15 +50,13 @@ module Chart
     end
 
     def save(id, attrs_json, force)
-      attrs = attrs_json ? JSON.parse(attrs_json) : {}
-      force = force == "true"
-
-      config = attrs["config"]
-      data   = attrs["data"]
-
+      attrs  = attrs_json ? JSON.parse(attrs_json) : {}
+      force  = force == "true"
+      config = attrs.fetch("config", {})
+ 
       if topic = Topic.find(id)
         case
-        when config.nil? || config.empty? || topic.config == config
+        when config.empty? || topic.config == config
           # do nothing
         when force
           topic.config = config
@@ -72,14 +65,9 @@ module Chart
           halt 500, "cannot overwrite existing config"
         end
       else
-        config ||= Topic.guess_config_for(data)
         topic = Topic.create(id, config)
       end
 
-      if data
-        data = topic.deserialize_data(data)
-        topic.save_data(data)
-      end
 
       respond_to do |f|
         f.html { redirect "/#{id}" }
@@ -87,24 +75,9 @@ module Chart
       end
     end
 
-    def data(id, range_str)
-      topic = Topic.find(id)
-      range = topic.x_type.parse(range_str)
-      data  = topic.find_data(*range)
-      data  = topic.serialize_data(data)
-      respond_to do |f|
-        f.html { data.inspect }
-        f.json { {'data' => data}.to_json }
-      end
-    end
-
     helpers do
       def base_url
         @base_url ||= "#{request.env['rack.url_scheme']}://#{request.env['HTTP_HOST']}"
-      end
-
-      def fetch_url(id, transport)
-        File.join(base_url, id, transport)
       end
     end
   end
