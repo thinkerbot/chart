@@ -1,0 +1,25 @@
+drop table if exists topics;
+create table topics (
+  id     varchar,
+  config varchar,
+  primary key (id)
+);
+<% require 'chart/topic' %>
+<% Chart::Topic::TYPES.each do |type| %>
+<%   topic_class = Chart::Topic.topic_class_for_type(type) %>
+<%   table_name = topic_class.data_table %>
+<%   columns = topic_class.column_names.zip(topic_class.column_classes) %>
+<%   order_columns = columns.map(&:first); order_columns.delete_at(1) %>
+
+drop table if exists <%= table_name %>;
+create table <%= table_name %> (
+  xp varint,
+  id varchar,<% columns.each do |name, column| %>
+  <%= name %>  <%= column.typestr %>,<% end %>
+  primary key ((xp, id), <%= columns.map(&:first).join(', ') %>)
+)
+with clustering order by (
+<%= order_columns.map {|name| "  #{name} desc" }.join(",\n") %>
+
+);
+<% end %>

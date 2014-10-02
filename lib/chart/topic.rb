@@ -38,14 +38,22 @@ module Chart
       end
 
       def create(id, type = 'ii', config = {})
-        topic_class = Topics.const_get("#{type.upcase}Topic")
+        topic_class = topic_class_for_type(type)
         topic_class.new(id, config).save
       end
 
       def from_values(values)
         id, type, config_json = values
-        topic_class = Topics.const_get("#{type.upcase}Topic")
+        topic_class = topic_class_for_type(type)
         topic_class.new(id, config_json ? JSON.parse(config_json) : {})
+      end
+
+      def topic_class_for_type(type)
+        Topics.const_get("#{type.upcase}Topic") or raise("no such type: #{type.inspect}")
+      end
+
+      def inherited(subclass)
+        Topic::TYPES << subclass.type
       end
 
       def type
@@ -89,6 +97,7 @@ module Chart
         }
       end
     end
+    TYPES = []
 
     attr_reader :id
     attr_reader :type
