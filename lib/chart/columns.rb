@@ -7,16 +7,16 @@ module Chart
   module Columns
     module_function
 
-    def create(type)
+    def lookup(type)
       case type
       when DoubleColumn.signature
-        DoubleColumn.new
+        DoubleColumn
       when IntegerColumn.signature, nil
-        IntegerColumn.new
+        IntegerColumn
       when TimestampColumn.signature
-        TimestampColumn.new
+        TimestampColumn
       when VarcharColumn.signature
-        VarcharColumn.new
+        VarcharColumn
       else
         raise "unknown column type: #{type}"
       end

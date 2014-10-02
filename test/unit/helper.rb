@@ -13,6 +13,10 @@ module TopicHelper
     File.join(TEST_RUN_TIME, __name__, *suffix)
   end
 
+  def execute(*args)
+    Chart.conn.execute(*args)
+  end
+
   def setup
     unless Chart::Topic.connected?
       Chart::Topic.connect
