@@ -7,6 +7,7 @@ Bundler.setup
 require 'test/unit'
 
 module TopicHelper
+  require 'chart'
   TEST_RUN_TIME = Time.now.strftime("%Y%m%d%H%M%S")
 
   def test_topic_id(*suffix)

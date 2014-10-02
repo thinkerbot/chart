@@ -1,5 +1,6 @@
 require 'chart/connection'
 require 'chart/columns'
+require 'json'
 
 module Chart
   class Topic
