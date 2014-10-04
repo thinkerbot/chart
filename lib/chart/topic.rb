@@ -159,6 +159,17 @@ module Chart
       data
     end
 
+    def read_data(range_str)
+      range = x_column.parse(range_str)
+      data  = find_data(*range)
+      serialize_data(data)
+    end
+
+    def write_data(data)
+      data = deserialize_data(data)
+      save_data(data)
+    end
+
     #
     # Representation
     #

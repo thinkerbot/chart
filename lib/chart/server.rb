@@ -29,7 +29,7 @@ module Chart
     post('/topics/*') { create(params[:splat][0], params[:topic] || {}) }
 
     get('/data/*')    { read_data(params[:splat][0], params[:x]) }
-    post('/data/*')   { save_data(params[:splat][0], parse_data) }
+    post('/data/*')   { write_data(params[:splat][0], parse_data) }
 
     def parse_data
       case request.content_type
@@ -83,11 +83,9 @@ module Chart
       end
     end
 
-    def save_data(id, data)
+    def write_data(id, data)
       topic = find(id)
-
-      data = topic.deserialize_data(data)
-      topic.save_data(data)
+      topic.write_data(data)
 
       respond_to do |f|
         f.html { redirect "/#{id}" }
@@ -97,9 +95,8 @@ module Chart
 
     def read_data(id, range_str)
       topic = find(id)
-      range = topic.x_column.parse(range_str)
-      data  = topic.find_data(*range)
-      data  = topic.serialize_data(data)
+      data  = topic.read_data(range_str)
+
       respond_to do |f|
         f.html { data.inspect }
         f.json { data.to_json }
