@@ -163,6 +163,26 @@ module Chart
     # Representation
     #
 
+    def deserialize_data(data)
+      data.map do |idata|
+        odata = []
+        columns.each_with_index do |column, i|
+          odata[i] = column.deserialize(idata[i])
+        end
+        odata
+      end
+    end
+
+    def serialize_data(data)
+      data.map do |idata|
+        odata = []
+        columns.each_with_index do |column, i|
+          odata[i] = column.serialize(idata[i])
+        end
+        odata
+      end
+    end
+
     def to_json
       {
         :id => id,
