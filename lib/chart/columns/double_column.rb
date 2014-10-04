@@ -26,7 +26,7 @@ module Chart
       end
 
       def serialize(value)
-        value.to_s
+        value
       end
 
       def offset(value, period_str)

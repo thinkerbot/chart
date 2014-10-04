@@ -13,10 +13,10 @@ module ColumnTest
 
   def test_serialization
     serialization_examples.each do |(s, d)|
-      assert_equal d, column.deserialize(s), "deserialize failed: #{s.inspect}"
-      assert_equal s, column.serialize(d),   "serialize failed: #{d.inspect}"
-      assert_equal d, column.deserialize(column.serialize(d)), "deserialized round-trip failed: #{d.inspect}"
-      assert_equal s, column.serialize(column.deserialize(s)), "serialized round-trip failed: #{s.inspect}"
+      assert_equal d, column.deserialize(s),    "deserialize failed: #{s.inspect}"
+      assert_equal s, column.serialize(d).to_s, "serialize failed: #{d.inspect}"
+      assert_equal d, column.deserialize(column.serialize(d)),      "deserialized round-trip failed: #{d.inspect}"
+      assert_equal s, column.serialize(column.deserialize(s)).to_s, "serialized round-trip failed: #{s.inspect}"
     end
   end
 
