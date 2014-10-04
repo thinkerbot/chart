@@ -6,6 +6,28 @@ mkdir -p "$ts_test_dir"
 infile="$ts_test_dir/input"
 }
 
+setup_ii_input () {
+mkdir -p "$ts_test_dir"
+cat > "$infile" <<DOC
+0,1
+1,2
+2,3
+3,4
+DOC
+}
+
+test_chart_writes_ii_csv_to_topic () {
+setup_ii_input
+id=$(chart -a "$infile")
+chart-console -x "select x, y from ii_data where xp = 0 and id = '$id'" |
+assert_output "\
+3,4
+2,3
+1,2
+0,1
+"
+}
+
 #
 # -h
 #

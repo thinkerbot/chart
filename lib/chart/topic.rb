@@ -33,6 +33,8 @@ module Chart
       end
 
       def find(id)
+        return nil if id.nil?
+
         rows = connection.execute("select id, type, config from topics where id = ?", id)
         row = rows.first
         row ? from_values(row.values) : nil

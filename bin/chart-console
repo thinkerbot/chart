@@ -5,10 +5,11 @@ begin
   require 'chart'
   require 'irb'
   require 'shellwords'
+  require 'csv'
 
   options = Chart.options(
     :mode => :console,
-    :overrides => {}
+    :overrides => {},
   )
   OptionParser.new do |opts|
     opts.banner = %{
@@ -109,6 +110,10 @@ options:
   else
     Chart.setup(options)
     rows = conn.execute(mode)
-    rows.each {|row| puts row }
+    CSV($stdout) do |csv|
+      rows.each do |row|
+        csv << row.values
+      end
+    end
   end
 end

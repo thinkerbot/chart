@@ -1,11 +1,15 @@
 #!/usr/bin/env ruby
 begin
-  require 'optparse'
   require 'chart'
-  require 'json'
+  require 'optparse'
+  require 'securerandom'
+  require 'csv'
 
-  options = {
-  }
+  options = Chart.options(
+    :id   => nil,
+    :type => 'ii',
+    :auto_create => false,
+  )
   OptionParser.new do |opts|
     opts.banner = %{
 usage: chart [options] FILES...
@@ -16,13 +20,49 @@ options:
 
 }.lstrip
 
+    opts.on("-a", "--auto-create-topic", "create topic if missing") do |value|
+      options[:auto_create] = true
+    end
+
+    opts.on("-e", "--environment ENV", "environment (#{options[:environment]})") do |value|
+      options[:environment] = value
+    end
+
     opts.on("-h", "--help", "print this help") do
       puts opts
       puts
       puts Chart.version
       exit
     end
+
+    opts.on("-i", "--topic-id ID", "topic id") do |value|
+      options[:id] = value
+    end
+
+    opts.on("-t", "--type TYPE", "the data type (#{options[:type]})") do |value|
+      options[:type] = value
+    end
   end.parse!
+  Chart.setup(options)
+
+  id   = options[:id]
+  type = options[:type]
+  auto_create = options[:auto_create]
+
+  topic = Chart::Topic.find(id)
+  data  = CSV.new(ARGF)
+
+  if topic.nil?
+    if auto_create
+      id ||= SecureRandom.uuid
+      topic = Chart::Topic.create(id, type)
+    else
+      raise("not found: #{id.inspect}")
+    end
+  end
+  puts id
+
+  topic.write_data(data)
 
 rescue Interrupt
   exit 130
