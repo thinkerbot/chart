@@ -24,7 +24,7 @@ module Chart
       end
 
       def deserialize(str)
-        Time.iso8601(str).in_time_zone
+        (str.kind_of?(Time) ? str : Time.iso8601(str)).in_time_zone
       end
 
       def serialize(value)
