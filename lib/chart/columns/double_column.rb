@@ -33,6 +33,10 @@ module Chart
         value + deserialize(period_str)
       end
 
+      def default_range
+        [0.0, 0.0, '[]']
+      end
+
       def pkey(value)
         (value / bucket_size).floor
       end

@@ -163,6 +163,16 @@ class Chart::ServerTest < Test::Unit::TestCase
     ], CSV.new(last_response.body).each.to_a
   end
 
+  def test_get_data_without_x_uses_default_range
+    create_ii_topic
+    header "Accept", "application/json"
+
+    get "/data/#{test_topic_id}"
+    assert_equal [
+      [0, 1],
+    ], JSON.parse(last_response.body)
+  end
+
   def test_get_data_returns_data_in_min_max_range_in_reverse_xz_order
     create_ii_topic
     header "Accept", "application/json"

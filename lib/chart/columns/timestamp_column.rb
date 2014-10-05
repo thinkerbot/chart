@@ -36,6 +36,11 @@ module Chart
         value.advance(period.data)
       end
 
+      def default_range
+        now = Time.zone.now
+        [now, now, '[]']
+      end
+
       def pkey(value)
         value.to_i / bucket_size
       end

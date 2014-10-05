@@ -30,6 +30,7 @@ options:
   Chart.setup(options)
 
   range_str, *ids = ARGV; ARGV.clear
+  range_str = nil if range_str == '-'
   topics = ids.map {|id| Chart::Topic.find(id) || raise("not found: #{id.inspect}") }
 
   CSV($stdout) do |csv|

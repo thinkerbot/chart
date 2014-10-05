@@ -32,6 +32,10 @@ module Chart
       raise NotImplementedError
     end
 
+    def default_range
+      raise NotImplementedError
+    end
+
     def parse(range_str)
       case range_str
       when /^(\[|\()(.+?),(.+?)(\]|\))$/
@@ -40,6 +44,8 @@ module Chart
         min = deserialize($2)
         max = offset(min, $3)
         min <= max ? [min, max, $1 + $4] : [max, min, $1 + $4]
+      when nil
+        default_range
       else
         min = deserialize(range_str)
         [min, min, '[]']
