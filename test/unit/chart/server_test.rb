@@ -169,6 +169,9 @@ class Chart::ServerTest < Test::Unit::TestCase
 
     get "/data/#{test_topic_id}"
     assert_equal [
+      [3, 4],
+      [2, 3],
+      [1, 2],
       [0, 1],
     ], JSON.parse(last_response.body)
   end

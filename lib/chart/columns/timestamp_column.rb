@@ -38,7 +38,7 @@ module Chart
 
       def default_range
         now = Time.zone.now
-        [now, now, '[]']
+        [now, now + bucket_size, '[]']
       end
 
       def pkey(value)

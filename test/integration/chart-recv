@@ -30,6 +30,9 @@ chart-recv '[0,3]' "$id" | assert_output "\
 test_chart_recv_with_dash_range_uses_default () {
 id=$(setup_ii_topic)
 chart-recv - "$id" | assert_output "\
+3,4
+2,3
+1,2
 0,1
 "
 }

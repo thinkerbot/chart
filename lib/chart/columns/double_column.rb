@@ -34,7 +34,7 @@ module Chart
       end
 
       def default_range
-        [0.0, 0.0, '[]']
+        [0.0, bucket_size, '[]']
       end
 
       def pkey(value)
