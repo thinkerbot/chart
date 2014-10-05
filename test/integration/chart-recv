@@ -1,0 +1,38 @@
+#!/bin/bash
+. test/integration/helper
+
+setup () {
+mkdir -p "$ts_test_dir"
+infile="$ts_test_dir/input"
+}
+
+setup_ii_topic () {
+mkdir -p "$ts_test_dir"
+cat > "$infile" <<DOC
+0,1
+1,2
+2,3
+3,4
+DOC
+chart-send -a "$infile"
+}
+
+test_chart_recv_reads_ii_csv_from_topic () {
+id=$(setup_ii_topic)
+chart-recv '[0,3]' "$id" | assert_output "\
+3,4
+2,3
+1,2
+0,1
+"
+}
+
+#
+# -h
+#
+
+test_chart_recv_h_prints_help () {
+chart-recv -h | grep -q "usage: chart-recv"
+}
+
+. ts

@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
   spec.license       = "MIT"
 
   spec.files         = []
-  spec.executables   = ["chart-send", "chart-server", "chart-console"]
+  spec.executables   = ["chart-send", "chart-recv", "chart-server", "chart-console"]
   spec.test_files    = []
   spec.require_paths = ["lib"]
 

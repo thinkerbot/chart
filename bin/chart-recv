@@ -1,0 +1,49 @@
+#!/usr/bin/env ruby
+begin
+  require 'chart'
+  require 'optparse'
+  require 'csv'
+
+  options = Chart.options(
+  )
+  OptionParser.new do |opts|
+    opts.banner = %{
+usage: chart-recv [options] RANGE TOPIC_IDS..
+
+  Recv data from topics.
+
+options:
+
+}.lstrip
+
+    opts.on("-e", "--environment ENV", "environment (#{options[:environment]})") do |value|
+      options[:environment] = value
+    end
+
+    opts.on("-h", "--help", "print this help") do
+      puts opts
+      puts
+      puts Chart.version
+      exit
+    end
+  end.parse!
+  Chart.setup(options)
+
+  range_str, *ids = ARGV; ARGV.clear
+  topics = ids.map {|id| Chart::Topic.find(id) || raise("not found: #{id.inspect}") }
+
+  CSV($stdout) do |csv|
+    topics.each do |topic|
+      data = topic.read_data(range_str)
+      data.each do |row|
+        row.unshift topic.id if topics.length > 1
+        csv << row
+      end
+    end
+  end
+
+rescue Interrupt
+  exit 130
+rescue Errno::EPIPE
+  exit 0
+end
