@@ -12,9 +12,9 @@ begin
   )
   OptionParser.new do |opts|
     opts.banner = %{
-usage: chart [options] FILES...
+usage: chart-send [options] FILES...
 
-  Create d3 charts from data files.
+  Send data to a topic.
 
 options:
 
