@@ -6,6 +6,7 @@ begin
   options = Chart.options(
     :port     => 4567,
     :bind     => "0.0.0.0",
+    :reload_templates => false,
   )
   OptionParser.new do |opts|
     opts.banner = %{
@@ -29,6 +30,10 @@ options:
       puts
       puts Chart.version
       exit
+    end
+
+    opts.on("--[no-]reload-templates", "reload templates between requests (#{options[:reload_templates]})") do |value|
+      options[:reload_templates] = value
     end
 
     opts.on("-p", "--port PORT", "run on the specified port (#{options[:port]})") do |value|
