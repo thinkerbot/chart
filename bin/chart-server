@@ -17,7 +17,7 @@ usage: chart-server [options]
 options:
 }.lstrip
 
-    opts.on("-b", "--binding IP", "bind to the specified IP (#{options[:binding]})") do |value|
+    opts.on("-b", "--binding IP", "bind to the specified IP (#{options[:bind]})") do |value|
       options[:bind] = value
     end
 
