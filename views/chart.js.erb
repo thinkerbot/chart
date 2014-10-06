@@ -1,0 +1,36 @@
+Chart = <%= topic.to_json %>;
+
+// these should be based on topic.type...
+Chart.casters = {
+  x: function (value) { return +value; },
+  y: function (value) { return +value; },
+};
+
+Chart.fetch_url = "<%= base_url %>/data/<%= topic.id %>?range_str=<%= range_str %>";
+
+Chart.no_more_data = function () {
+  console.log("No more data");
+};
+
+<%= erb :"charts/#{format}.js" %>
+
+Chart.fetch = function () {
+  d3.csv(Chart.fetch_url).row(function(d) {
+    d.id  = Chart.id;
+    d.x   = Chart.casters.x(d.x);
+    d.y   = Chart.casters.y(d.y);
+    return d;
+  }).get(function(error, data) {
+    if (typeof data == 'undefined') {
+      alert(error.statusText);
+    } else if (data.length == 0) {
+      Chart.no_more_data();
+    } else {
+      Chart.data = data;
+      Chart.render();<% if poll_timeout_in_ms %>
+      setTimeout(Chart.fetch, <%= poll_timeout_in_ms %>);<% end %>
+    };
+  });
+};
+
+Chart.fetch();

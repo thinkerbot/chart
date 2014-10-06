@@ -20,6 +20,7 @@ chart-send -a "$infile"
 test_chart_recv_reads_ii_csv_from_topic () {
 id=$(setup_ii_topic)
 chart-recv '[0,3]' "$id" | assert_output "\
+x,y
 3,4
 2,3
 1,2
@@ -30,6 +31,7 @@ chart-recv '[0,3]' "$id" | assert_output "\
 test_chart_recv_with_dash_range_uses_default () {
 id=$(setup_ii_topic)
 chart-recv - "$id" | assert_output "\
+x,y
 3,4
 2,3
 1,2

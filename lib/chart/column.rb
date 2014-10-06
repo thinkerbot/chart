@@ -36,6 +36,15 @@ module Chart
       raise NotImplementedError
     end
 
+    def default_range_str
+      format(*default_range)
+    end
+
+    def format(min, max, boundary = "[]")
+      head, tail = boundary.chars.to_a
+      "#{head}#{serialize(min)},#{serialize(max)}#{tail}"
+    end
+
     def parse(range_str)
       case range_str
       when /^(\[|\()(.+?),(.+?)(\]|\))$/

@@ -159,6 +159,7 @@ class Chart::ServerTest < Test::Unit::TestCase
 
     get "/data/#{test_topic_id}?x=1"
     assert_equal [
+      ["x", "y"],
       ["1", "2"],
     ], CSV.new(last_response.body).each.to_a
   end

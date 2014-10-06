@@ -94,16 +94,21 @@ module Chart
     end
 
     def read_data(id, range_str)
-      if range_str.nil?
-        halt(422, "no x specified")
-      end
-
       topic = find(id)
-      data  = topic.read_data(range_str)
+      data = topic.read_data(range_str)
 
       respond_to do |f|
-        f.html { erb :data, :locals => {:data => data} }
-        f.json { data.to_json }
+        f.html {
+          format = "series"
+          erb :"charts/#{format}.html", :locals => {:chart => {
+            :topic  => topic,
+            :format => format,
+            :poll_timeout_in_ms => nil,
+            :range_str => range_str,
+            :data => data
+          }}
+        }
+        f.json { data.shift; data.to_json }
         f.csv  { CSV.generate {|csv| data.each {|d| csv << d }} }
       end
     end

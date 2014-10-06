@@ -164,7 +164,9 @@ module Chart
     def read_data(range_str)
       range = x_column.parse(range_str)
       data  = find_data(*range)
-      serialize_data(data)
+      data  = serialize_data(data)
+      data.unshift ['x', 'y']
+      data
     end
 
     def write_data(data)

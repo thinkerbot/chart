@@ -1,0 +1,83 @@
+Chart.render = function () {
+  var margin = {top: 20, right: 80, bottom: 30, left: 50},
+      width  = 960 - margin.left - margin.right,
+      height = 500 - margin.top - margin.bottom;
+
+  var x = d3.scale.linear()
+      .range([0, width]);
+
+  var y = d3.scale.linear()
+      .range([height, 0]);
+
+  var color = d3.scale.category10();
+
+  var xAxis = d3.svg.axis()
+      .scale(x)
+      .orient("bottom");
+
+  var yAxis = d3.svg.axis()
+      .scale(y)
+      .orient("left");
+
+  var line = d3.svg.line()
+      .interpolate("basis")
+      .x(function(d) { return x(d.x); })
+      .y(function(d) { return y(d.y); });
+
+  var svg = d3.select("body").select("#svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  // Data -- this is built to handle multiple series.
+  // Simply add to Chart.data datum with different ids.
+  var config = Chart.config;
+  var data   = Chart.data;
+  var series_data = d3.nest()
+      .key(function(d) { return d.id; })
+      .entries(data);
+
+  var topics = series_data.map(function (sd) { return sd.key; });
+  color.domain(topics);
+
+  x.domain(d3.extent(data, function(d) { return d.x; }));
+  y.domain(d3.extent(data, function(d) { return d.y; }));
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+  
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Y");
+
+  var series = svg.selectAll(".series")
+      .data(series_data)
+      .enter().append("g")
+      .attr("class", "series");
+
+  series.append("path")
+      .attr("class", "line")
+      .attr("d", function(sd) { return line(sd.values); })
+      .style("stroke", function(sd) { return color(sd.key); });
+
+  series.append("text")
+      .datum(function(sd) {
+        var last_value = sd.values[sd.values.length - 1];
+        return {id: sd.key, x: last_value.x, y: last_value.y};
+      })
+      .attr("transform", function(d) {
+        return "translate(" + x(d.x) + "," + y(d.y) + ")";
+      })
+      .attr("x", 3)
+      .attr("dy", ".35em")
+      .text(function(d) { return d.id; });
+};
