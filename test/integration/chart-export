@@ -14,12 +14,12 @@ cat > "$infile" <<DOC
 2,3
 3,4
 DOC
-chart-send -a "$infile"
+chart-import -a "$infile"
 }
 
-test_chart_recv_reads_ii_csv_from_topic () {
+test_chart_export_reads_ii_csv_from_topic () {
 id=$(setup_ii_topic)
-chart-recv '[0,3]' "$id" | assert_output "\
+chart-export '[0,3]' "$id" | assert_output "\
 x,y
 3,4
 2,3
@@ -28,9 +28,9 @@ x,y
 "
 }
 
-test_chart_recv_with_dash_range_uses_default () {
+test_chart_export_with_dash_range_uses_default () {
 id=$(setup_ii_topic)
-chart-recv - "$id" | assert_output "\
+chart-export - "$id" | assert_output "\
 x,y
 3,4
 2,3
@@ -43,8 +43,8 @@ x,y
 # -h
 #
 
-test_chart_recv_h_prints_help () {
-chart-recv -h | grep -q "usage: chart-recv"
+test_chart_export_h_prints_help () {
+chart-export -h | grep -q "usage: chart-export"
 }
 
 . ts

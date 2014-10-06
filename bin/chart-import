@@ -12,9 +12,9 @@ begin
   )
   OptionParser.new do |opts|
     opts.banner = %{
-usage: chart-send [options] FILES...
+usage: chart-import [options] FILES...
 
-  Send data to a topic.
+  Import topic data.
 
 options:
 

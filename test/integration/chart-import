@@ -16,9 +16,9 @@ cat > "$infile" <<DOC
 DOC
 }
 
-test_chart_send_writes_ii_csv_to_topic () {
+test_chart_import_writes_ii_csv_to_topic () {
 setup_ii_input
-id=$(chart-send -a "$infile")
+id=$(chart-import -a "$infile")
 chart-console -x "select x, y from ii_data where xp = 0 and id = '$id'" |
 assert_output "\
 3,4
@@ -32,8 +32,8 @@ assert_output "\
 # -h
 #
 
-test_chart_send_h_prints_help () {
-chart-send -h | grep -q "usage: chart-send"
+test_chart_import_h_prints_help () {
+chart-import -h | grep -q "usage: chart-import"
 }
 
 . ts

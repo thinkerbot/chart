@@ -8,9 +8,9 @@ begin
   )
   OptionParser.new do |opts|
     opts.banner = %{
-usage: chart-recv [options] RANGE TOPIC_IDS..
+usage: chart-export [options] RANGE TOPIC_IDS..
 
-  Recv data from topics.
+  Export topic data.
 
 options:
 
