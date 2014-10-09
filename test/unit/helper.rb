@@ -24,4 +24,19 @@ module TopicHelper
     end
     super
   end
+
+  def topic_class
+    raise NotImplementedError
+  end
+
+  def assert_projection(projection, data, expected)
+    topic = topic_class.create(test_topic_id)
+    topic.save_data(data)
+
+    x_values  = data.map(&:first).sort
+    range_str = "[#{x_values.first},#{x_values.last}]"
+    actual = topic.read_data(range_str, :projection => projection, :sort => true)
+
+    assert_equal expected, actual
+  end
 end

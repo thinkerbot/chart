@@ -95,7 +95,7 @@ module Chart
 
     def read_data(id, range_str)
       topic = find(id)
-      data = topic.read_data(range_str)
+      data = topic.read_data(range_str, :headers => true)
 
       respond_to do |f|
         f.html {

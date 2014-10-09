@@ -1,5 +1,6 @@
 require 'chart/connection'
 require 'chart/columns'
+require 'chart/projection'
 require 'json'
 
 module Chart
@@ -100,7 +101,10 @@ module Chart
         }
       end
     end
+    include Projection
+
     TYPES = []
+    PROJECTIONS = {}
 
     attr_reader :id
     attr_reader :type
@@ -161,11 +165,26 @@ module Chart
       data
     end
 
-    def read_data(range_str)
+    def projection_for(projection_type)
+      self.class::PROJECTIONS[projection_type] or raise("unknown projection: #{projection_type.inspect}")
+    end
+
+    def read_data(range_str, options = {})
       range = x_column.parse(range_str)
       data  = find_data(*range)
       data  = serialize_data(data)
-      data.unshift ['x', 'y']
+
+      projection_method = projection_for(options[:projection])
+      data = send(projection_method, data)
+
+      if options[:sort]
+        data.sort!
+      end
+
+      if options[:headers]
+        data.unshift Projection::HEADERS[projection_method]
+      end
+
       data
     end
 
