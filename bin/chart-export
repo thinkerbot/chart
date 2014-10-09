@@ -35,7 +35,7 @@ options:
 
   CSV($stdout) do |csv|
     topics.each do |topic|
-      data = topic.read_data(range_str)
+      data = topic.read_data(range_str, :headers => true)
       data.each do |row|
         row.unshift topic.id if topics.length > 1
         csv << row

@@ -30,14 +30,14 @@ class Chart::Topics::IITopicTest < Test::Unit::TestCase
 
   def test_projection_to_histogram
     assert_projection "histogram", [
-      [0, 1],
-      [0, 2],
-      [1, 3],
-      [3, 4],
+      [0, 0],
+      [1, 8],
+      [2, 1],
+      [3, 0],
     ],[
       [0, 2],
       [1, 1],
-      [3, 1]
+      [8, 1]
     ]
   end
 end

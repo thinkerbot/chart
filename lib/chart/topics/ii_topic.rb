@@ -4,9 +4,9 @@ module Chart
   module Topics
     class IITopic < Topic
       PROJECTIONS = {
-        nil         => :xy,
-        "xy"        => :xy,
-        "histogram" => :xy_to_y,
+        nil         => [["x", "y"], []],
+        "xy"        => [["x", "y"], []],
+        "histogram" => [["y", "n"], [:xy_to_y]],
       }
     end
   end

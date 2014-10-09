@@ -165,7 +165,7 @@ module Chart
       data
     end
 
-    def projection_for(projection_type)
+    def projections_for(projection_type)
       self.class::PROJECTIONS[projection_type] or raise("unknown projection: #{projection_type.inspect}")
     end
 
@@ -174,15 +174,17 @@ module Chart
       data  = find_data(*range)
       data  = serialize_data(data)
 
-      projection_method = projection_for(options[:projection])
-      data = send(projection_method, data)
+      headers, transforms = projections_for(options[:projection])
+      transforms.each do |method_name|
+        data = send(method_name, data)
+      end
 
       if options[:sort]
         data.sort!
       end
 
       if options[:headers]
-        data.unshift Projection::HEADERS[projection_method]
+        data.unshift headers
       end
 
       data
