@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 require File.expand_path('../../helper', __FILE__)
-require 'chart/topic'
+require 'chart/topics/ii_topic'
 
 class Chart::TopicTest < Test::Unit::TestCase
   include TopicHelper

@@ -210,9 +210,4 @@ module Chart
       [id, type, config.to_json]
     end
   end
-
-  module Topics
-    class IITopic < Topic
-    end
-  end
 end
