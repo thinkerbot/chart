@@ -151,10 +151,16 @@ module Chart
       self
     end
 
-    def save_data(data)
+    def save_data(data, async = false)
       data.each do |x, *args|
         xp = x_column.pkey(x)
-        connection.execute(self.class.save_data_query, xp, id, x, *args)
+        res = \
+        if async
+          connection.execute_async(self.class.save_data_query, xp, id, x, *args)
+        else
+          connection.execute(self.class.save_data_query, xp, id, x, *args)
+        end
+        yield res if block_given?
       end
     end
 
@@ -195,9 +201,9 @@ module Chart
       data
     end
 
-    def write_data(data)
+    def write_data(data, async = false, &block)
       data = deserialize_data(data)
-      save_data(data)
+      save_data(data, async, &block)
     end
 
     #
