@@ -10,5 +10,14 @@ module Chart
       outputs.to_a
     end
 
+    def xyz_to_xy_by_z_max(inputs) 
+      outputs = []
+      inputs.group_by do |(x,y,z)|
+        x
+      end.each_pair do |(x, xyz_data)|
+        outputs << xyz_data.sort_by(&:last).last[0,2]
+      end
+      outputs
+    end
   end
 end
