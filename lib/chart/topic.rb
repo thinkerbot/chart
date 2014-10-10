@@ -41,7 +41,7 @@ module Chart
         row ? from_values(row.values) : nil
       end
 
-      def create(id, type = 'ii', config = {})
+      def create(id, type = self.type, config = {})
         topic_class = topic_class_for_type(type)
         topic_class.new(id, config).save
       end
@@ -61,7 +61,10 @@ module Chart
       end
 
       def type
-        @type ||= self.to_s.split("::").last.downcase.chomp("topic")
+        @type ||= begin
+          prefix = self.to_s.split("::").last.downcase.chomp("topic")
+          prefix.empty? ? "ii" : prefix
+        end
       end
 
       def data_table
@@ -180,7 +183,9 @@ module Chart
       end
 
       if options[:sort]
-        data.sort!
+        data.sort_by! do |datum|
+          [datum[0], datum[1..-1].reverse]
+        end
       end
 
       if options[:headers]
