@@ -28,7 +28,7 @@ module Chart
     get('/topics/*')  { show(params[:splat][0]) }
     post('/topics/*') { create(params[:splat][0], params[:topic] || {}) }
 
-    get('/data/*')    { read_data(params[:splat][0], params[:x]) }
+    get('/data/*')    { read_data(params[:splat][0], params[:x], params[:projection]) }
     post('/data/*')   { write_data(params[:splat][0], parse_data) }
 
     def parse_data
@@ -93,9 +93,9 @@ module Chart
       end
     end
 
-    def read_data(id, range_str)
+    def read_data(id, range_str, projection)
       topic = find(id)
-      data = topic.read_data(range_str, :headers => true)
+      data = topic.read_data(range_str, :headers => true, :projection => projection)
 
       respond_to do |f|
         f.html {

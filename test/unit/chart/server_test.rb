@@ -224,4 +224,17 @@ class Chart::ServerTest < Test::Unit::TestCase
     get "/data/#{test_topic_id}?x=(3~-3)"
     assert_equal reverse_data_from_1_to_2, JSON.parse(last_response.body)
   end
+
+  def test_get_data_with_a_projection
+    create_ii_topic
+    header "Accept", "application/json"
+
+    get "/data/#{test_topic_id}?projection=histogram"
+    assert_equal [
+      [4,1],
+      [3,1],
+      [2,1],
+      [1,1],
+    ], JSON.parse(last_response.body)
+  end
 end
