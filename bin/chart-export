@@ -5,6 +5,7 @@ begin
   require 'csv'
 
   options = Chart.options(
+    :projection => "xy"
   )
   OptionParser.new do |opts|
     opts.banner = %{
@@ -26,6 +27,10 @@ options:
       puts Chart.version
       exit
     end
+
+    opts.on("-p", "--projection PROJECTION", "projection (#{options[:projection]})") do |value|
+      options[:projection] = value
+    end
   end.parse!
   Chart.setup(options)
 
@@ -35,7 +40,7 @@ options:
 
   CSV($stdout) do |csv|
     topics.each do |topic|
-      data = topic.read_data(range_str, :headers => true)
+      data = topic.read_data(range_str, :headers => true, :projection => options[:projection])
       data.each do |row|
         row.unshift topic.id if topics.length > 1
         csv << row

@@ -47,4 +47,19 @@ test_chart_export_h_prints_help () {
 chart-export -h | grep -q "usage: chart-export"
 }
 
+#
+# -p
+#
+
+test_chart_export_p_sets_projection () {
+id=$(setup_ii_topic)
+chart-export -p histogram - "$id" | assert_output "\
+y,n
+4,1
+3,1
+2,1
+1,1
+"
+}
+
 . ts
