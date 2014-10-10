@@ -91,8 +91,8 @@ module Chart
         end
       end
 
-      def save_data_query
-        @save_data_query ||= "insert into #{data_table} (xp, id, #{column_names.join(', ')}) values (?, ?, #{column_names.map {|s| "?"}.join(', ')})"
+      def save_datum_query
+        @save_datum_query ||= "insert into #{data_table} (xp, id, #{column_names.join(', ')}) values (?, ?, #{column_names.map {|s| "?"}.join(', ')})"
       end
 
       def find_data_queries
@@ -151,17 +151,20 @@ module Chart
       self
     end
 
-    def save_data(data, async = false)
-      data.each do |x, *args|
-        xp = x_column.pkey(x)
-        res = \
-        if async
-          connection.execute_async(self.class.save_data_query, xp, id, x, *args)
-        else
-          connection.execute(self.class.save_data_query, xp, id, x, *args)
-        end
-        yield res if block_given?
-      end
+    def save_data(data)
+      data.map do |datum|
+        save_datum_async(*datum)
+      end.map(&:join)
+    end
+
+    def save_datum(x, *args)
+      xp = x_column.pkey(x)
+      connection.execute(self.class.save_datum_query, xp, id, x, *args)
+    end
+
+    def save_datum_async(x, *args)
+      xp = x_column.pkey(x)
+      connection.execute_async(self.class.save_datum_query, xp, id, x, *args)
     end
 
     def find_data(xmin, xmax, boundary = '[]')
@@ -201,33 +204,60 @@ module Chart
       data
     end
 
-    def write_data(data, async = false, &block)
-      data = deserialize_data(data)
-      save_data(data, async, &block)
+    def write_each(data, options = {})
+      unless block_given?
+        return enum_for(:write_each, data)
+      end
+
+      async = options[:async]
+      deserialize_each(data) do |datum|
+        res = async ? save_datum_async(*datum) : save_datum(*datum)
+        yield res
+      end
+    end
+
+    def write_data(data, options = {})
+      write_each(data).map.to_a
     end
 
     #
     # Representation
     #
 
-    def deserialize_data(data)
-      data.map do |idata|
+    def deserialize_each(data)
+      unless block_given?
+        return enum_for(:deserialize_each, data)
+      end
+
+      data.each do |idata|
         odata = []
         columns.each_with_index do |column, i|
           odata[i] = column.deserialize(idata[i])
         end
-        odata
+        yield odata
       end
     end
 
-    def serialize_data(data)
-      data.map do |idata|
+    def deserialize_data(data)
+      deserialize_each(data).map.to_a
+    end
+
+    def serialize_each(data)
+      unless block_given?
+        return enum_for(:serialize_each, data)
+      end
+
+      data.each do |idata|
         odata = []
         columns.each_with_index do |column, i|
           odata[i] = column.serialize(idata[i])
         end
-        odata
+        yield odata
       end
+    end
+
+    def serialize_data(data)
+      serialize_each(data).map.to_a
     end
 
     def to_json
