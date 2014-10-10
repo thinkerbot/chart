@@ -1,11 +1,11 @@
 require 'logging'
-require 'cql'
+require 'cassandra'
 require 'yaml'
 
 module Chart
   class Connection
     PROJECT_ROOT = File.expand_path("../../..", __FILE__)
-    LOG_LEVELS   = %w{debug info warn error}
+    LOG_LEVELS   = %w{debug info warn error fatal}
     Logging.init LOG_LEVELS
 
     class << self
@@ -59,8 +59,6 @@ module Chart
           :port                 => config.fetch('port', 9042),
           :keyspace             => config.fetch('keyspace'),
           :connection_timeout   => config.fetch('connection_timeout', 5),
-          :connections_per_node => config.fetch('connections_per_node', 1),
-          :default_consistency  => config.fetch('default_consistency', :quorum),
         }
       end
     end
@@ -75,8 +73,12 @@ module Chart
       @prepared_statements = Hash.new {|hash, cql| hash[cql] = client.prepare(cql) }
     end
 
+    def cluster
+      @cluster ||= Cassandra.connect(config.merge(:logger => logger))
+    end
+
     def client
-      @client ||= Cql::Client.connect(config.merge(:logger => logger))
+      @client ||= cluster.connect(config[:keyspace])
     end
 
     def close
@@ -86,7 +88,13 @@ module Chart
     def execute(cql, *args)
       statement = @prepared_statements[cql]
       logger.debug { "execute #{cql.inspect} #{args.inspect}"}
-      statement.execute(*args)
+      client.execute(statement, *args)
+    end
+
+    def execute_async(cql, *args)
+      statement = @prepared_statements[cql]
+      logger.debug { "execute #{cql.inspect} #{args.inspect}"}
+      client.execute_async(statement, *args)
     end
   end
 end
