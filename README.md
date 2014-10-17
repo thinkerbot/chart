@@ -10,11 +10,13 @@ Setup the vm:
 
 Setup config files:
 
-    ln -s database.yml.example config/database.yml
+    ln -s cassandra.yml.example config/database.yml
 
 Migrate:
 
-    bundle exec ruby -rerb -e 'puts ERB.new(STDIN.read, nil, "<>").result' < vm/tables.cql.erb > vm/tables.cql
-    chart-console -q -k - < vm/setup.cql  # one-time
-    chart-console -q < vm/tables.cql
-    chart-console -q -e test < vm/tables.cql
+    chart-console -q -k - < db/cassandra/setup.cql  # one-time
+
+    mkdir -p tmp/db/cassandra
+    bundle exec ruby -rerb -e 'puts ERB.new(STDIN.read, nil, "<>").result' < db/cassandra/tables.cql.erb > tmp/db/cassandra/tables.cql
+    chart-console -q < tmp/db/cassandra/tables.cql
+    chart-console -q -e test < tmp/db/cassandra/tables.cql

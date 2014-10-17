@@ -19,4 +19,3 @@ tmp
 .vagrant
 config/*.yml
 log/
-vm/tables.cql
