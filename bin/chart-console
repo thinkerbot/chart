@@ -25,6 +25,10 @@ options:
 
 }.lstrip
 
+    opts.on("-c", "--config-file CONFIG_FILE", "database config file (#{options[:database_file]})") do |value|
+      options[:database_file] = value
+    end
+
     opts.on("-H", "--hosts HOST[,HOST]", "override hosts config") do |value|
       options[:overrides][:hosts] = value.split(',')
     end
