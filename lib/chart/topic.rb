@@ -1,5 +1,7 @@
 require 'chart/connection'
-require 'chart/dimension_types'
+require 'chart/columns'
+require 'chart/projection'
+require 'json'
 
 module Chart
   class Topic
@@ -32,64 +34,83 @@ module Chart
       end
 
       def find(id)
-        rows = connection.execute("select id, config from topics where id = ?", id)
+        return nil if id.nil?
+
+        rows = connection.execute("select id, type, config from topics where id = ?", id)
         row = rows.first
         row ? from_values(row.values) : nil
       end
 
-      def create(id, config = {})
-        new(id, config).save
-      end
-
-      def guess_config_for(data)
-        if data
-          signatures = data.map do |xyz|
-            xyz.map {|field| signature_for(field) }
-          end
-          dimensions = signatures.transpose.map do |field_signatures|
-            aggregate_signature(field_signatures)
-          end
-          if dimensions.uniq.sort == ["d", "i"]
-            dimensions = ["d", "d", "d"]
-          end
-        else
-          dimensions = ["i", "i", "i"]
-        end
-
-        {"dimensions" => dimensions}
-      end
-
-      def signature_for(field)
-        case
-        when field.kind_of?(Fixnum)  then "i"
-        when field.kind_of?(Numeric) then "d"
-        when field.kind_of?(String)
-          case
-          when DimensionTypes::IntegerType.match(field) then "i"
-          when DimensionTypes::DoubleType.match(field) then "d"
-          when DimensionTypes::TimestampType.match(field) then "t"
-          else "s"
-          end
-        else raise "cannot guess signature for field: #{field.inspect}"
-        end
-      end
-
-      def aggregate_signature(signatures)
-        case signatures.uniq.sort
-        when ["i"] then "i"
-        when ["d", "i"], ["d"] then "d"
-        when ["t"] then "t"
-        else "s"
-        end
+      def create(id, type = self.type, config = {})
+        topic_class = topic_class_for_type(type)
+        topic_class.new(id, config).save
       end
 
       def from_values(values)
-        id, config_json = values
-        new(id, config_json ? JSON.parse(config_json) : {})
+        id, type, config_json = values
+        topic_class = topic_class_for_type(type)
+        topic_class.new(id, config_json ? JSON.parse(config_json) : {})
+      end
+
+      def topic_class_for_type(type)
+        Topics.const_get("#{type.upcase}Topic") or raise("no such type: #{type.inspect}")
+      end
+
+      def inherited(subclass)
+        Topic::TYPES << subclass.type
+      end
+
+      def type
+        @type ||= begin
+          prefix = self.to_s.split("::").last.downcase.chomp("topic")
+          prefix.empty? ? "ii" : prefix
+        end
+      end
+
+      def data_table
+        @data_table ||= "#{type}_data"
+      end
+
+      def column_names
+        @column_names ||= begin
+          column_names = Enumerator.new do |y|
+            y << 'x'; y << 'y'; y << 'z';
+            n = 1
+            loop do
+              y << "z#{n}"
+              n += 1
+            end
+          end
+          type.chars.map {|c| column_names.next }
+        end
+      end
+
+      def column_classes
+        @column_classes ||= begin
+          type.chars.map {|c| Columns.lookup(c) }
+        end
+      end
+
+      def save_datum_query
+        @save_datum_query ||= "insert into #{data_table} (xp, id, #{column_names.join(', ')}) values (?, ?, #{column_names.map {|s| "?"}.join(', ')})"
+      end
+
+      def find_data_queries
+        @find_data_queries ||= {
+          "[]" => "select #{column_names.join(', ')} from #{data_table} where xp = ? and id = ? and x >= ? and x <= ?",
+          "[)" => "select #{column_names.join(', ')} from #{data_table} where xp = ? and id = ? and x >= ? and x <  ?",
+          "(]" => "select #{column_names.join(', ')} from #{data_table} where xp = ? and id = ? and x >  ? and x <= ?",
+          "()" => "select #{column_names.join(', ')} from #{data_table} where xp = ? and id = ? and x >  ? and x <  ?",
+        }
       end
     end
+    include Projection
+
+    TYPES = []
+    PROJECTIONS = {}
 
     attr_reader :id
+    attr_reader :type
     attr_reader :config
 
     def initialize(id, config = {})
@@ -97,8 +118,12 @@ module Chart
       @config = config
     end
 
+    def type
+      self.class.type
+    end
+
     def connection
-      self.class.connection
+      Topic.connection
     end
 
     def [](key)
@@ -109,109 +134,142 @@ module Chart
       config[key] = value
     end
 
-    def config=(config)
-      @config = config
-      @dimension = nil
-      @data_table = nil
+    def columns
+      @columns ||= self.class.column_classes.map {|c| c.new }
     end
 
-    #
-    # Dimensions
-    #
-
-    def dimensions
-      @dimensions ||= begin
-        dimension_types = config.fetch("dimensions", [nil, nil, nil])
-        dimension_types.map do |dimension_type|
-          DimensionTypes.create(dimension_type)
-        end
-      end
-    end
-
-    def x_type
-      dimensions[0]
-    end
-
-    def y_type
-      dimensions[1]
-    end
-
-    def z_type
-      dimensions[2]
+    def x_column
+      columns[0]
     end
 
     #
     # Queries
     #
 
-    def data_table
-      @data_table ||= begin
-        dimension_classes = dimensions.map(&:class)
-        Chart::Connection::DATA_TABLES[dimension_classes] or raise("unsupported dimension signature: #{dimension_classes.map(&:signature)}")
-      end
-    end
-
     def save
-      connection.execute("insert into topics (id, config) values (?, ?)", *to_values)
+      connection.execute("insert into topics (id, type, config) values (?, ?, ?)", *to_values)
       self
     end
 
+    def save_data(data)
+      data.map do |datum|
+        save_datum_async(*datum)
+      end.map(&:join)
+    end
+
+    def save_datum(x, *args)
+      xp = x_column.pkey(x)
+      connection.execute(self.class.save_datum_query, xp, id, x, *args)
+    end
+
+    def save_datum_async(x, *args)
+      xp = x_column.pkey(x)
+      connection.execute_async(self.class.save_datum_query, xp, id, x, *args)
+    end
+
     def find_data(xmin, xmax, boundary = '[]')
-      data = []
-      x_type.pkeys_for_range(xmin, xmax).each do |xp|
-        rows = \
-        case boundary
-        when "[]" then connection.execute("select x, y, z from #{data_table} where xp = ? and id = ? and x >= ? and x <= ?", xp, id, xmin, xmax)
-        when "[)" then connection.execute("select x, y, z from #{data_table} where xp = ? and id = ? and x >= ? and x <  ?", xp, id, xmin, xmax)
-        when "(]" then connection.execute("select x, y, z from #{data_table} where xp = ? and id = ? and x >  ? and x <= ?", xp, id, xmin, xmax)
-        when "()" then connection.execute("select x, y, z from #{data_table} where xp = ? and id = ? and x >  ? and x <  ?", xp, id, xmin, xmax)
-        else raise "invalid boundary condition: #{boundary.inspect}"
-        end
+      query = self.class.find_data_queries[boundary] or raise("invalid boundary condition: #{boundary.inspect}")
+      data  = []
+      x_column.pkeys_for_range(xmin, xmax).each do |xp|
+        rows = connection.execute(query, xp, id, xmin, xmax)
         rows.each {|row| data << row.values }
       end
       data
     end
 
-    def deserialize_data(data)
-      data.map do |idata|
-        odata = []
-        dimensions.each_with_index do |dim, i|
-          odata[i] = dim.deserialize(idata[i])
+    def projections_for(projection_type)
+      self.class::PROJECTIONS[projection_type] or raise("unknown projection: #{projection_type.inspect}")
+    end
+
+    def read_data(range_str, options = {})
+      range = x_column.parse(range_str)
+      data  = find_data(*range)
+      data  = serialize_data(data)
+
+      headers, transforms = projections_for(options[:projection])
+      transforms.each do |method_name|
+        data = send(method_name, data)
+      end
+
+      if options[:sort]
+        data.sort_by! do |datum|
+          [datum[0], datum[1..-1].reverse]
         end
-        odata
+      end
+
+      if options[:headers]
+        data.unshift headers
+      end
+
+      data
+    end
+
+    def write_each(data, options = {})
+      unless block_given?
+        return enum_for(:write_each, data)
+      end
+
+      async = options[:async]
+      deserialize_each(data) do |datum|
+        res = async ? save_datum_async(*datum) : save_datum(*datum)
+        yield res
       end
     end
 
-    def save_data(data)
-      data.each do |(x, y, z)|
-        xp = x_type.pkey(x)
-        connection.execute("insert into #{data_table} (xp, id, x, y, z) values (?, ?, ?, ?, ?)", xp, id, x, y, z)
-      end
-    end
-
-    def serialize_data(data)
-      data.map do |idata|
-        odata = []
-        dimensions.each_with_index do |dim, i|
-          odata[i] = dim.serialize(idata[i])
-        end
-        odata
-      end
+    def write_data(data, options = {})
+      write_each(data).map.to_a
     end
 
     #
     # Representation
     #
 
+    def deserialize_each(data)
+      unless block_given?
+        return enum_for(:deserialize_each, data)
+      end
+
+      data.each do |idata|
+        odata = []
+        columns.each_with_index do |column, i|
+          odata[i] = column.deserialize(idata[i])
+        end
+        yield odata
+      end
+    end
+
+    def deserialize_data(data)
+      deserialize_each(data).map.to_a
+    end
+
+    def serialize_each(data)
+      unless block_given?
+        return enum_for(:serialize_each, data)
+      end
+
+      data.each do |idata|
+        odata = []
+        columns.each_with_index do |column, i|
+          odata[i] = column.serialize(idata[i])
+        end
+        yield odata
+      end
+    end
+
+    def serialize_data(data)
+      serialize_each(data).map.to_a
+    end
+
     def to_json
       {
         :id => id,
+        :type => type,
         :config => config
       }.to_json
     end
 
     def to_values
-      [id, config.to_json]
+      [id, type, config.to_json]
     end
   end
 end

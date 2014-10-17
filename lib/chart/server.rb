@@ -1,6 +1,7 @@
 require 'sinatra/base'
 require 'sinatra/contrib'
 require 'json'
+require 'csv'
 require 'chart'
 require 'chart/topic'
 
@@ -18,13 +19,31 @@ module Chart
     set :bind, "0.0.0.0"
     set :port, 4567
 
+    # curl -X POST -d '{"x":"X"}' -H "Content-Type: application/json" http://localhost:4567/
     # curl -X POST -F 'config={"x":"X"}' -H "Accept: application/json" http://localhost:4567/chart/two
     # curl -H "Accept: application/json" http://localhost:4567/chart/two
 
+    get('/')          { redirect '/topics' }
     get('/topics')    { list }
     get('/topics/*')  { show(params[:splat][0]) }
-    post('/topics/*') { save(params[:splat][0], params[:topic], params[:force]) }
-    get('/data/*')    { data(params[:splat][0], params[:x]) }
+    post('/topics/*') { create(params[:splat][0], params[:topic] || {}) }
+
+    get('/data/*')    { read_data(params[:splat][0], params[:x], params[:projection]) }
+    post('/data/*')   { write_data(params[:splat][0], parse_data) }
+
+    def parse_data
+      case request.content_type
+      when "application/json"
+        JSON.load(request.body)
+      when "text/csv"
+        CSV.new(request.body)
+      when "multipart/form-data", "application/x-www-form-urlencoded"
+        csv = params["data"]
+        CSV.parse(csv)
+      else
+        halt(422, "unsupported content-type: #{request.content_type.inspect}")
+      end
+    end
 
     def list
       ids = Topic.list
@@ -40,71 +59,63 @@ module Chart
 
     def show(id)
       topic = find(id)
-      chart = "monitor"
-      transport = "data"
-
       respond_to do |f|
-        f.html { erb :"charts/#{chart}.html", :locals => {
+        f.html { erb :show, :locals => {
           :id => id,
-          :chart => chart,
-          :transport => transport,
           :topic => topic
         } }
         f.json { topic.to_json }
       end
     end
 
-    def save(id, attrs_json, force)
-      attrs = attrs_json ? JSON.parse(attrs_json) : {}
-      force = force == "true"
+    def create(id, attrs)
+      type   = attrs.fetch("type", 'ii')
+      config = attrs.fetch("config", {})
 
-      config = attrs["config"]
-      data   = attrs["data"]
-
-      if topic = Topic.find(id)
-        case
-        when config.nil? || config.empty? || topic.config == config
-          # do nothing
-        when force
-          topic.config = config
-          topic.save
-        else
-          halt 500, "cannot overwrite existing config"
-        end
-      else
-        config ||= Topic.guess_config_for(data)
-        topic = Topic.create(id, config)
+      if existing_topic = Topic.find(id)
+        halt(422, "already exists: #{id.inspect}")
       end
 
-      if data
-        data = topic.deserialize_data(data)
-        topic.save_data(data)
-      end
-
+      topic  = Topic.create(id, type, config)
       respond_to do |f|
         f.html { redirect "/#{id}" }
         f.json { topic.to_json }
       end
     end
 
-    def data(id, range_str)
-      topic = Topic.find(id)
-      range = topic.x_type.parse(range_str)
-      data  = topic.find_data(*range)
-      data  = topic.serialize_data(data)
+    def write_data(id, data)
+      topic = find(id)
+      topic.write_data(data)
+
       respond_to do |f|
-        f.html { data.inspect }
-        f.json { {'data' => data}.to_json }
+        f.html { redirect "/#{id}" }
+        f.json { {:received => data.length}.to_json }
+      end
+    end
+
+    def read_data(id, range_str, projection)
+      topic = find(id)
+      data = topic.read_data(range_str, :headers => true, :projection => projection)
+
+      respond_to do |f|
+        f.html {
+          format = "series"
+          erb :"charts/#{format}.html", :locals => {:chart => {
+            :topic  => topic,
+            :format => format,
+            :poll_timeout_in_ms => nil,
+            :range_str => range_str,
+            :data => data
+          }}
+        }
+        f.json { data.shift; data.to_json }
+        f.csv  { CSV.generate {|csv| data.each {|d| csv << d }} }
       end
     end
 
     helpers do
       def base_url
         @base_url ||= "#{request.env['rack.url_scheme']}://#{request.env['HTTP_HOST']}"
-      end
-
-      def fetch_url(id, transport)
-        File.join(base_url, id, transport)
       end
     end
   end

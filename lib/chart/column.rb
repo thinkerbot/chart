@@ -1,5 +1,5 @@
 module Chart
-  class DimensionType
+  class Column
     class << self
       def default_bucket_size
         nil
@@ -32,14 +32,29 @@ module Chart
       raise NotImplementedError
     end
 
+    def default_range
+      raise NotImplementedError
+    end
+
+    def default_range_str
+      format(*default_range)
+    end
+
+    def format(min, max, boundary = "[]")
+      head, tail = boundary.chars.to_a
+      "#{head}#{serialize(min)},#{serialize(max)}#{tail}"
+    end
+
     def parse(range_str)
       case range_str
       when /^(\[|\()(.+?),(.+?)(\]|\))$/
         [deserialize($2), deserialize($3), $1 + $4]
-      when /^(\[|\()(.+?):(.+?)(\]|\))$/
+      when /^(\[|\()(.+?)~(.+?)(\]|\))$/
         min = deserialize($2)
         max = offset(min, $3)
         min <= max ? [min, max, $1 + $4] : [max, min, $1 + $4]
+      when nil
+        default_range
       else
         min = deserialize(range_str)
         [min, min, '[]']
@@ -50,12 +65,19 @@ module Chart
       raise NotImplementedError
     end
 
-    def pkeys_for_range(min, max)
+    def pkeys_for_range(min, max, boundary = "[]")
       values = []
       current = min
       while current <= max
         values << pkey(current)
         current += bucket_size
+      end
+      case boundary
+      when "[]" then # no change
+      when "[)" then values.pop
+      when "(]" then values.shift
+      when "()" then values.shift; values.pop;
+      else raise "invalid boundary: #{boundary.inspect}"
       end
       values
     end

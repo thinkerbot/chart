@@ -1,0 +1,6 @@
+#!/bin/bash
+ruby -e '
+10000.times do |i|
+  puts "#{i},#{i}"
+end
+' | time chart-import -a

@@ -1,5 +1,5 @@
 require "chart/version"
-require "chart/topic"
+require "chart/topics"
 
 module Chart
   module_function

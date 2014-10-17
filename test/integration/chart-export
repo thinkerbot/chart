@@ -1,0 +1,65 @@
+#!/bin/bash
+. test/integration/helper
+
+setup () {
+mkdir -p "$ts_test_dir"
+infile="$ts_test_dir/input"
+}
+
+setup_ii_topic () {
+mkdir -p "$ts_test_dir"
+cat > "$infile" <<DOC
+0,1
+1,2
+2,3
+3,4
+DOC
+chart-import -a "$infile"
+}
+
+test_chart_export_reads_ii_csv_from_topic () {
+id=$(setup_ii_topic)
+chart-export '[0,3]' "$id" | assert_output "\
+x,y
+3,4
+2,3
+1,2
+0,1
+"
+}
+
+test_chart_export_with_dash_range_uses_default () {
+id=$(setup_ii_topic)
+chart-export - "$id" | assert_output "\
+x,y
+3,4
+2,3
+1,2
+0,1
+"
+}
+
+#
+# -h
+#
+
+test_chart_export_h_prints_help () {
+chart-export -h | grep -q "usage: chart-export"
+}
+
+#
+# -p
+#
+
+test_chart_export_p_sets_projection () {
+id=$(setup_ii_topic)
+chart-export -p histogram - "$id" | assert_output "\
+y,n
+4,1
+3,1
+2,1
+1,1
+"
+}
+
+. ts

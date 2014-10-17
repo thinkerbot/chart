@@ -1,0 +1,19 @@
+<h1>Topic <%= topic.id %></h1>
+
+<h2>Type <%= topic.type %></h2>
+
+<h2>Config</h2>
+<% if topic.config.empty? %>
+<p>(none)</p>
+<% else %>
+<dl><% topic.config.each_pair do |key, value| %>
+<dt><%= key %></dt>
+<dd><%= value %></dd><% end %>
+</dl>
+<% end %>
+
+<h2>Chart</h2>
+<form action="<% base_url %>/data/<%= topic.id %>" method="GET">
+<label>X Range:</label><input type="text" name="x" value="<%= topic.x_column.default_range_str %>" />
+<input type="submit" value="Submit">
+</form>

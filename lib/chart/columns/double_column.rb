@@ -1,8 +1,8 @@
-require 'chart/dimension_type'
+require 'chart/column'
 
 module Chart
-  module DimensionTypes
-    class DoubleType < DimensionType
+  module Columns
+    class DoubleColumn < Column
       class << self
         def default_bucket_size
           100000
@@ -31,6 +31,10 @@ module Chart
 
       def offset(value, period_str)
         value + deserialize(period_str)
+      end
+
+      def default_range
+        [0.0, bucket_size, '[]']
       end
 
       def pkey(value)

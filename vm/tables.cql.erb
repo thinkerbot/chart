@@ -1,23 +1,26 @@
 drop table if exists topics;
 create table topics (
   id     varchar,
+  type   varchar,
   config varchar,
   primary key (id)
 );
-<% require 'chart/connection' %>
-<% Chart::Connection::DATA_TABLES.each do |(x, y, z), table_name| %>
+<% require 'chart/topics' %>
+<% Chart::Topic::TYPES.each do |type| %>
+<%   topic_class = Chart::Topic.topic_class_for_type(type) %>
+<%   table_name = topic_class.data_table %>
+<%   columns = topic_class.column_names.zip(topic_class.column_classes) %>
+<%   order_columns = columns.dup; order_columns.delete_at(1) %>
 
 drop table if exists <%= table_name %>;
 create table <%= table_name %> (
   xp varint,
-  id varchar,
-  x  <%= x.typestr %>,
-  z  <%= z.typestr %>,
-  y  <%= y.typestr %>,
-  primary key ((xp, id), x, z)
+  id varchar,<% columns.each do |name, column| %>
+  <%= name %>  <%= column.typestr %>,<% end %>
+  primary key ((xp, id), <%= (order_columns + columns[1,1]).map(&:first).join(', ') %>)
 )
 with clustering order by (
-  x desc,
-  z desc
+<%= order_columns.map {|name, column| "  #{name} desc" }.join(",\n") %>
+
 );
 <% end %>
