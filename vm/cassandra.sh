@@ -12,7 +12,7 @@ apt-get install -y curl
 echo "deb http://debian.datastax.com/community stable main" >> /etc/apt/sources.list.d/cassandra.sources.list
 curl -L http://debian.datastax.com/debian/repo_key | apt-key add -
 apt-get update
-apt-get install -y dsc20
+apt-get install -y dsc21
 
 LOCAL_IP_ADDR=192.168.33.10
 sed -i="" -e "
