@@ -9,7 +9,6 @@ begin
 
   options = Chart.options(
     :mode => :console,
-    :overrides => {},
   )
   OptionParser.new do |opts|
     opts.banner = %{
@@ -30,7 +29,7 @@ options:
     end
 
     opts.on("-H", "--hosts HOST[,HOST]", "override hosts config") do |value|
-      options[:overrides][:hosts] = value.split(',')
+      options[:config][:hosts] = value.split(',')
     end
 
     opts.on("-e", "--environment ENV", "environment (#{options[:environment]})") do |value|
@@ -38,7 +37,7 @@ options:
     end
 
     opts.on("-k", "--keyspace KEYSPACE", "override keyspace config") do |value|
-      options[:overrides][:keyspace] = value == '-' ? nil : value
+      options[:config][:keyspace] = value == '-' ? nil : value
     end
 
     opts.on("-h", "--help", "print this help") do
@@ -49,7 +48,7 @@ options:
     end
 
     opts.on("-P", "--port PORT", "override port config") do |value|
-      options[:overrides][:port] = value
+      options[:config][:port] = value
     end
 
     opts.on("-p", "--print-cqlsh", "print cqlsh command") do

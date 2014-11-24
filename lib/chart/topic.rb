@@ -1,4 +1,4 @@
-require 'chart/connection'
+require 'chart/connections'
 require 'chart/columns'
 require 'chart/projection'
 
@@ -11,7 +11,9 @@ module Chart
 
       def connect(options = {})
         disconnect
-        @connection = Connection.setup(options)
+        database_type = options[:database_type] || Connection.guess_database_type(options)
+        connection_class = Connections.lookup(database_type)
+        @connection = connection_class.setup(options)
         self
       end
 

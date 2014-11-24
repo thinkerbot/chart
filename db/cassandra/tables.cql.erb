@@ -7,8 +7,8 @@ create table topics (
 );
 <% require 'chart/topics' %>
 <% Chart::Topic::TYPES.each do |type| %>
-<%   table_name   = Chart::Connection.table_name_for(type) %>
-<%   columns      = Chart::Connection.columns_for_type(type) %>
+<%   table_name   = Chart::Connections::CassandraConnection.table_name_for(type) %>
+<%   columns      = Chart::Connections::CassandraConnection.columns_for_type(type) %>
 <%   order_columns = columns.dup; order_columns.delete_at(1) %>
 
 drop table if exists <%= table_name %>;
