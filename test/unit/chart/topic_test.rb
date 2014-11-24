@@ -8,33 +8,6 @@ class Chart::TopicTest < Test::Unit::TestCase
 
   Topic = Chart::Topic
 
-  def test_from_values_deserializes_topic
-    topic = Topic.from_values([test_topic_id, 'ii', '{"a":"A"}'])
-    assert_equal test_topic_id, topic.id
-    assert_equal 'ii', topic.type
-    assert_equal 'A', topic['a']
-  end
-
-  def test_to_values_serializes_topic
-    topic = IITopic.new(test_topic_id, 'a' => 'A')
-    assert_equal [test_topic_id, 'ii', '{"a":"A"}'], topic.to_values
-  end
-
-  # data_table
-  #
-  
-  def test_data_table_is_derived_from_type
-    assert_equal "ii_data", IITopic.data_table
-  end
-
-  #
-  # column_names
-  #
-
-  def test_column_names_are_derived_from_type
-    assert_equal ["x", "y"], IITopic.column_names
-  end
-
   #
   # save_data
   #

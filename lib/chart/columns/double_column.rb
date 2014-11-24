@@ -12,10 +12,6 @@ module Chart
           "d"
         end
 
-        def typestr
-          "double"
-        end
-
         def match(str)
           str =~ /^-?\d+\.\d+$/
         end

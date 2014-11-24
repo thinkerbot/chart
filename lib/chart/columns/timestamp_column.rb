@@ -14,10 +14,6 @@ module Chart
           "t"
         end
 
-        def typestr
-          "timestamp"
-        end
-
         def match(str)
           (Time.iso8601(str) rescue false) ? true : false
         end

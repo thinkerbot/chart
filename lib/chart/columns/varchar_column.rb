@@ -11,10 +11,6 @@ module Chart
         def signature
           "s"
         end
-
-        def typestr
-          "varchar"
-        end
       end
 
       def deserialize(str)

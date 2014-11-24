@@ -7,20 +7,19 @@ create table topics (
 );
 <% require 'chart/topics' %>
 <% Chart::Topic::TYPES.each do |type| %>
-<%   topic_class = Chart::Topic.topic_class_for_type(type) %>
-<%   table_name = topic_class.data_table %>
-<%   columns = topic_class.column_names.zip(topic_class.column_classes) %>
+<%   table_name   = Chart::Connection.table_name_for(type) %>
+<%   columns      = Chart::Connection.columns_for_type(type) %>
 <%   order_columns = columns.dup; order_columns.delete_at(1) %>
 
 drop table if exists <%= table_name %>;
 create table <%= table_name %> (
   xp varint,
-  id varchar,<% columns.each do |name, column| %>
-  <%= name %>  <%= column.typestr %>,<% end %>
+  id varchar,<% columns.each do |name, typestr| %>
+  <%= name %>  <%= typestr %>,<% end %>
   primary key ((xp, id), <%= (order_columns + columns[1,1]).map(&:first).join(', ') %>)
 )
 with clustering order by (
-<%= order_columns.map {|name, column| "  #{name} desc" }.join(",\n") %>
+<%= order_columns.map {|name, typestr| "  #{name} desc" }.join(",\n") %>
 
 );
 <% end %>

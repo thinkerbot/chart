@@ -12,10 +12,6 @@ module Chart
           "i"
         end
 
-        def typestr
-          "varint"
-        end
-
         def match(str)
           str =~ /^\-?\d+$/
         end
