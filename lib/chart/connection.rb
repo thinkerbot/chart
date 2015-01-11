@@ -1,6 +1,7 @@
 require 'json'
 require 'logging'
 require 'yaml'
+require 'chart/async_interface'
 
 module Chart
   class Connection
@@ -75,6 +76,12 @@ module Chart
       @logger = Logging.logger[self]
     end
 
+    # Logging
+
+    def log_execute(query, args)
+      logger.debug { "execute #{query.inspect} #{args.inspect}"}
+    end
+
     # Connection
 
     def close
@@ -82,11 +89,12 @@ module Chart
     end
 
     def execute(query, *args)
-      logger.debug { "execute #{query.inspect} #{args.inspect}"}
+      raise NotImplementedError
     end
 
     def execute_async(query, *args)
-      logger.debug { "execute #{query.inspect} #{args.inspect}"}
+      res = execute(query, *args)
+      AsyncInterface.new(res)
     end
 
     def connection_command

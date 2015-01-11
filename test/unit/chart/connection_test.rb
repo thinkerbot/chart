@@ -88,7 +88,10 @@ module Chart
       xmin = data.map(&:first).sort.first
       xmax = data.map(&:first).sort.last
 
-      data.map {|x, y| conn.insert_datum_async(id, type, pkey, x, y) }.map(&:join)
+      futures = data.map {|x, y| conn.insert_datum_async(id, type, pkey, x, y) }
+      assert_equal true, futures.all? {|f| f.respond_to?(:join) }
+      
+      futures.each(&:join)
       assert_equal data, conn.select_data(id, type, [pkey], xmin, xmax, "[]").sort
     end
   end

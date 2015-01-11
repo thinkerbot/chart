@@ -89,13 +89,13 @@ module Chart
       end
 
       def execute(query, *args)
-        super
+        log_execute(query, args)
         statement = prepared_statements[query]
         client.execute(statement, *args)
       end
 
       def execute_async(query, *args)
-        super
+        log_execute(query, args)
         statement = prepared_statements[query]
         client.execute_async(statement, *args)
       end
