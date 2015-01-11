@@ -1,9 +1,23 @@
 #!/usr/bin/env ruby
 require File.expand_path('../../../helper', __FILE__)
+require File.expand_path('../../connection_test', __FILE__)
 require 'chart/connections/cassandra_connection'
 
 class Chart::Connections::CassandraConnectionTest < Test::Unit::TestCase
   CassandraConnection = Chart::Connections::CassandraConnection
+  include Chart::ConnectionTest
+
+  class << self
+    def shared_conn
+      @shared_conn ||= CassandraConnection.setup(
+        :environment => "test"
+      )
+    end
+  end
+
+  def conn
+    @conn ||= self.class.shared_conn
+  end
 
   #
   # table_name_for
