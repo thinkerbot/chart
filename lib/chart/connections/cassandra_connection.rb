@@ -65,7 +65,7 @@ module Chart
       end
 
       def cluster
-        @cluster ||= Cassandra.connect(config.merge(:logger => logger))
+        @cluster ||= Cassandra.cluster(config.merge(:logger => logger))
       end
 
       def client
@@ -75,7 +75,17 @@ module Chart
       # Connection
 
       def close
-        @client.close if @client
+        if @client
+          @client.close
+          @client.nil?
+        end
+
+        if @cluster
+          @cluster.close
+          @cluster.nil?
+        end
+
+        self
       end
 
       def execute(query, *args)

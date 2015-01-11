@@ -9,9 +9,11 @@ class Chart::Connections::CassandraConnectionTest < Test::Unit::TestCase
 
   class << self
     def shared_conn
-      @shared_conn ||= CassandraConnection.setup(
-        :environment => "test"
-      )
+      @shared_conn ||= begin
+        conn = CassandraConnection.setup(:environment => "test")
+        at_exit { conn.close }
+        conn
+      end
     end
   end
 

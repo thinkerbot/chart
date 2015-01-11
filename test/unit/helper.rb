@@ -21,6 +21,7 @@ module TopicHelper
   def setup
     unless Chart::Topic.connected?
       Chart::Topic.connect
+      at_exit { Chart::Topic.connection.close }
     end
     super
   end
