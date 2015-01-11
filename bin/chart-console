@@ -36,8 +36,9 @@ options:
       options[:environment] = value
     end
 
-    opts.on("-k", "--keyspace KEYSPACE", "override keyspace config") do |value|
-      options[:config][:keyspace] = value == '-' ? nil : value
+    opts.on("-o", "--option KEY=VALUE", "override config option") do |option|
+      key, value = option.split('=', 2)
+      options[:config][key.to_sym] = value == '-' ? nil : value
     end
 
     opts.on("-h", "--help", "print this help") do
@@ -51,16 +52,16 @@ options:
       options[:config][:port] = value
     end
 
-    opts.on("-p", "--print-cqlsh", "print cqlsh command") do
-      options[:mode] = :print_cqlsh
+    opts.on("-p", "--print-cmd", "print database shell command") do
+      options[:mode] = :print_shell_command
     end
 
     opts.on("--print-config", "print client config") do
       options[:mode] = :print_config
     end
 
-    opts.on("-q", "--cqlsh", "launch cqlsh with argv") do
-      options[:mode] = :cqlsh
+    opts.on("-q", "--shell", "launch database shell with argv") do
+      options[:mode] = :launch_shell
     end
 
     opts.on("-x", "--execute QUERY", "execute query") do |value|
@@ -95,18 +96,14 @@ options:
     end
     puts print_config.to_yaml
 
-  when :cqlsh, :print_cqlsh
-    # don't use port as it is... maybe a different protocol? needs to be 9160
-    command = ["cqlsh", config[:hosts][0]]
-    if keyspace = config[:keyspace]
-      command += ["-k", keyspace]
-    end
-    command = command.map(&:to_s)
+  when :launch_shell, :print_shell_command
+    command, env = conn.connection_command
     command = Shellwords.shelljoin(command + ARGV)
 
-    if mode == :print_cqlsh
+    if mode == :print_shell_command
       puts command
     else
+      env.each_pair {|key, value| ENV[key] = value }
       exec command
     end
 
@@ -119,4 +116,8 @@ options:
       end
     end
   end
+rescue
+  raise if $DEBUG
+  $stderr.puts $!.message
+  exit 1
 end

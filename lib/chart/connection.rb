@@ -61,6 +61,10 @@ module Chart
         database_name = File.basename(database_file).chomp(File.extname(database_file))
         database_name == "database" ? "default" : database_name
       end
+
+      def connection_command(config)
+        raise NotImplementedError
+      end
     end
 
     attr_reader :config
@@ -83,6 +87,10 @@ module Chart
 
     def execute_async(query, *args)
       logger.debug { "execute #{query.inspect} #{args.inspect}"}
+    end
+
+    def connection_command
+      self.class.connection_command(config)
     end
 
     # Topics

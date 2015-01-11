@@ -15,6 +15,15 @@ module Chart
           }
         end
 
+        def connection_command(configs)
+          # don't use port as it is... maybe a different protocol? needs to be 9160
+          command = ["cqlsh", configs[:hosts][0]]
+          if keyspace = configs[:keyspace]
+            command += ["-k", keyspace]
+          end
+          [command.map(&:to_s), {}]
+        end
+
         def table_name_for(type)
           "#{type}_data"
         end
