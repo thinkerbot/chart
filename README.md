@@ -10,7 +10,9 @@ Setup the vm:
 
 Setup config files:
 
-    ln -s cassandra.yml.example config/database.yml
+    ln -s cassandra.yml.example config/cassandra.yml
+    ln -s postgres.yml.example config/postgres.yml
+    ln -s cassandra.yml config/database.yml
 
 Migrate:
 

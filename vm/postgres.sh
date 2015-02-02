@@ -55,13 +55,22 @@ sed -i.bak -f - /etc/postgresql/9.3/main/pg_hba.conf <<EOS
 EOS
 service postgresql restart
 
-# Create target databases
-sudo -u postgres createdb vagrant
-
-sudo -u postgres createuser --superuser vagrant
+# Create development database
+sudo -u postgres createdb development
+sudo -u postgres createuser --superuser development
 sudo -u postgres expect -f - <<DOC
-spawn psql -U vagrant -d vagrant
-expect "vagrant=#" { send "\\\\password vagrant\r" }
-expect "Enter new password:" { send "vagrant\r" }
-expect "Enter it again:" { send "vagrant\r" }
+spawn psql -U development -d development
+expect "development=#" { send "\\\\password development\r" }
+expect "Enter new password:" { send "development\r" }
+expect "Enter it again:" { send "development\r" }
+DOC
+
+# Create test database
+sudo -u postgres createdb test
+sudo -u postgres createuser --superuser test
+sudo -u postgres expect -f - <<DOC
+spawn psql -U test -d test
+expect "test=#" { send "\\\\password test\r" }
+expect "Enter new password:" { send "test\r" }
+expect "Enter it again:" { send "test\r" }
 DOC
