@@ -2,7 +2,7 @@
 require File.expand_path('../../../helper', __FILE__)
 require 'chart/topics/iii_topic'
 
-class Chart::Topics::IIITopicTest < Test::Unit::TestCase
+class Chart::Topics::IIITopicTest < Minitest::Test
   include TopicHelper
   include Chart::Topics
 

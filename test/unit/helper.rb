@@ -4,14 +4,14 @@ require 'rubygems'
 require 'bundler'
 Bundler.setup
 
-require 'test/unit'
+require 'minitest/autorun'
 
 module TopicHelper
   require 'chart'
   TEST_RUN_TIME = Time.now.strftime("%Y%m%d%H%M%S")
 
   def test_topic_id(*suffix)
-    File.join(TEST_RUN_TIME, __name__, *suffix)
+    File.join(TEST_RUN_TIME, name, *suffix)
   end
 
   def execute(*args)

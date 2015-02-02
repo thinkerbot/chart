@@ -3,7 +3,7 @@ require File.expand_path('../../../helper', __FILE__)
 require File.expand_path('../../connection_api_tests', __FILE__)
 require 'chart/connections/cassandra_connection'
 
-class Chart::Connections::CassandraConnectionTest < Test::Unit::TestCase
+class Chart::Connections::CassandraConnectionTest < Minitest::Test
   CassandraConnection = Chart::Connections::CassandraConnection
   include Chart::ConnectionAPITests
 

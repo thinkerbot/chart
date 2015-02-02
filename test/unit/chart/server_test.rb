@@ -3,7 +3,7 @@ require File.expand_path('../../helper', __FILE__)
 require 'chart/server'
 require 'rack/test'
 
-class Chart::ServerTest < Test::Unit::TestCase
+class Chart::ServerTest < Minitest::Test
   include Rack::Test::Methods
   include TopicHelper
 

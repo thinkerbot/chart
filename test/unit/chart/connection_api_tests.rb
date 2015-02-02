@@ -3,7 +3,7 @@ module Chart
     TEST_RUN_TIME = Time.now.strftime("%Y%m%d%H%M%S")
 
     def test_topic_id(*suffix)
-      File.join(TEST_RUN_TIME, __name__, *suffix)
+      File.join(TEST_RUN_TIME, name, *suffix)
     end
 
     def conn

@@ -3,7 +3,7 @@ require File.expand_path('../../../helper', __FILE__)
 require File.expand_path('../../column_test', __FILE__)
 require 'chart/columns/integer_column'
 
-class Chart::Columns::IntegerColumnTest < Test::Unit::TestCase
+class Chart::Columns::IntegerColumnTest < Minitest::Test
   IntegerColumn = Chart::Columns::IntegerColumn
   include ColumnTest
 
