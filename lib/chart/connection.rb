@@ -1,79 +1,41 @@
-require 'json'
 require 'logging'
-require 'yaml'
 require 'chart/async_interface'
 
 module Chart
   class Connection
-    PROJECT_ROOT = File.expand_path("../../..", __FILE__)
-    LOG_LEVELS   = %w{debug info warn error fatal}
-    Logging.init LOG_LEVELS
-
     class << self
-      def options(overrides = {})
-        { :environment         => ENV['RACK_ENV'] || 'development',
-          :database_type       => ENV['CHART_DATABASE_TYPE'],
-          :database_file       => ENV['CHART_DATABASE_FILE'] || File.expand_path("config/database.yml", PROJECT_ROOT),
-          :log_level           => ENV['CHART_LOG_LEVEL'] || LOG_LEVELS.index('warn'),
-          :log_format          => ENV['CHART_LOG_FORMAT'] || '[%d] %-5l %p %c %m\n',
-          :log_datetime_format => ENV['CHART_LOG_DATETIME_FORMAT'] || "%H:%M:%S.%3N",
-          :config              => {},
-        }.merge(overrides)
+      def convert_to_options(configs)
+        {}
       end
 
-      def setup(options = {})
-        options = self.options(options)
-        config = load_config(options)
-
-        level  = options[:log_level]
-        format = options[:log_format]
-        datetime_format = options[:log_datetime_format]
-
-        if level.to_s =~ /^\d$/
-          level = level.to_i
-        else
-          level_index = LOG_LEVELS.index(level.to_s.downcase) or raise "no such log level: #{level.inspect}"
-          level = level_index
-        end
-
-        min_level, max_level = 0, LOG_LEVELS.length
-        level = min_level if level < min_level
-        level = max_level if level > max_level
-
-        layout = Logging.layouts.pattern(:pattern => format, :date_pattern => datetime_format)
-        Logging.appenders.stderr.layout = layout
-
-        logger = Logging.logger[name]
-        logger.level = level
-        logger.appenders = [:stderr]
-
-        new(config)
+      def convert_to_configs(options)
+        {}
       end
 
-      def load_config(options = {})
-        environment = options.fetch(:environment)   { self.options[:environment] }
-        config_file = options.fetch(:database_file) { self.options[:database_file] }
-        overrides   = options.fetch(:config, {})
-        YAML.load_file(config_file).fetch(environment).merge!(overrides)
+      def default_configs
+        convert_to_configs(default_options)
       end
 
-      def guess_database_type(options = {})
-        database_file = options.fetch(:database_file, "default")
-        database_name = File.basename(database_file).chomp(File.extname(database_file))
-        database_name == "database" ? "default" : database_name
+      def default_options
+        {}
       end
 
-      def connection_command(config)
+      def setup(configs = {}, logger = nil)
+        options = convert_to_options(configs)
+        new(options, logger)
+      end
+
+      def command_env(options = {})
         raise NotImplementedError
       end
     end
 
-    attr_reader :config
+    attr_reader :options
     attr_reader :logger
 
-    def initialize(config)
-      @config = config
-      @logger = Logging.logger[self]
+    def initialize(options = {}, logger = nil)
+      @options = self.class.default_options.merge(options)
+      @logger  = logger || Logging.logger[name]
     end
 
     # Logging
@@ -97,8 +59,8 @@ module Chart
       AsyncInterface.new(res)
     end
 
-    def connection_command
-      self.class.connection_command(config)
+    def command_env
+      self.class.command_env(options)
     end
 
     # Topics

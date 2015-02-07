@@ -4,25 +4,56 @@ require 'cassandra'
 module Chart
   module Connections
     class CassandraConnection < Connection
+      DEFAULT_OPTIONS = {
+        :hosts    => ['127.0.0.1'],
+        :port     => 9042,
+        :keyspace => 'default',
+        :connection_timeout => 5,
+      }
+
       class << self
-        def load_config(options = {})
-          config = super
+        def convert_to_options(configs)
+          configs = default_configs.merge(configs)
           {
-            :hosts                => config.fetch('hosts'),
-            :port                 => config.fetch('port', 9042),
-            :keyspace             => config.fetch('keyspace'),
-            :connection_timeout   => config.fetch('connection_timeout', 5),
+            :hosts              => configs['hosts'].split(','),
+            :port               => configs['port'].to_i,
+            :keyspace           => configs['keyspace'],
+            :connection_timeout => configs['connection_timeout'].to_i,
           }
         end
 
-        def connection_command(configs)
+        def convert_to_configs(options)
+          options = default_options.merge(options)
+          {
+            'hosts'               => options[:hosts].join(','),
+            'port'                => options[:port].to_s,
+            'keyspace'            => options[:keyspace],
+            'connection_timeout'  => options[:connection_timeout].to_s,
+          }
+        end
+
+        def default_options
+          DEFAULT_OPTIONS
+        end
+
+        def command_env(options = {})
+          options = default_options.merge(options)
+
           # don't use port as it is... maybe a different protocol? needs to be 9160
-          command = ["cqlsh", configs[:hosts][0]]
-          if keyspace = configs[:keyspace]
+          host = options[:hosts].first
+          keyspace = options[:keyspace]
+
+          command = ["cqlsh", host]
+          unless keyspace.to_s.strip.empty?
             command += ["-k", keyspace]
           end
+
           [command.map(&:to_s), {}]
         end
+
+        #
+        # helpers
+        #
 
         def table_name_for(type)
           "#{type}_data"
@@ -57,19 +88,16 @@ module Chart
         end
       end
 
-      attr_reader :prepared_statements
-
-      def initialize(config)
-        super
-        @prepared_statements = Hash.new {|hash, query| hash[query] = client.prepare(query) }
-      end
-
       def cluster
-        @cluster ||= Cassandra.cluster(config.merge(:logger => logger))
+        @cluster ||= Cassandra.cluster(options)
       end
 
       def client
-        @client ||= cluster.connect(config[:keyspace])
+        @client ||= cluster.connect(options[:keyspace])
+      end
+
+      def prepared_statements
+        @prepared_statements ||= Hash.new {|hash, query| hash[query] = client.prepare(query) }
       end
 
       # Connection

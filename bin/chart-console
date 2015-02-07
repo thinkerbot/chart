@@ -24,21 +24,12 @@ options:
 
 }.lstrip
 
-    opts.on("-c", "--config-file CONFIG_FILE", "database config file (#{options[:database_file]})") do |value|
-      options[:database_file] = value
+    opts.on("-c", "--config-file CONFIG_FILE", "config file (#{options[:config_file]})") do |value|
+      options[:config_file] = value
     end
 
-    opts.on("-H", "--hosts HOST[,HOST]", "override hosts config") do |value|
-      options[:config][:hosts] = value.split(',')
-    end
-
-    opts.on("-e", "--environment ENV", "environment (#{options[:environment]})") do |value|
-      options[:environment] = value
-    end
-
-    opts.on("-o", "--option KEY=VALUE", "override config option") do |option|
-      key, value = option.split('=', 2)
-      options[:config][key.to_sym] = value == '-' ? nil : value
+    opts.on("-o", "--option KEY=VALUE", "override config option") do |value|
+      options[:settings] << value
     end
 
     opts.on("-h", "--help", "print this help") do
@@ -46,10 +37,6 @@ options:
       puts
       puts Chart.version
       exit
-    end
-
-    opts.on("-P", "--port PORT", "override port config") do |value|
-      options[:config][:port] = value
     end
 
     opts.on("-p", "--print-cmd", "print database shell command") do
@@ -79,14 +66,11 @@ options:
     Chart.conn
   end
 
-  def config
-    conn.config
-  end
-
   mode = options[:mode]
   case mode
   when :console
     ARGV.clear
+    at_exit { Chart.reset }
     IRB.start(__FILE__)
 
   when :print_config
@@ -97,18 +81,16 @@ options:
     puts print_config.to_yaml
 
   when :launch_shell, :print_shell_command
-    command, env = conn.connection_command
-    command = Shellwords.shelljoin(command + ARGV)
+    command, env = conn.command_env
+    command = (command + ARGV)
 
     if mode == :print_shell_command
-      puts command
+      puts command.shelljoin
     else
-      env.each_pair {|key, value| ENV[key] = value }
-      exec command
+      exec env, *command
     end
 
   else
-    Chart.setup(options)
     rows = conn.execute(mode)
     CSV($stdout) do |csv|
       rows.each do |row|
@@ -116,8 +98,4 @@ options:
       end
     end
   end
-rescue
-  raise if $DEBUG
-  $stderr.puts $!.message
-  exit 1
 end
