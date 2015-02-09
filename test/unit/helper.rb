@@ -6,6 +6,17 @@ Bundler.setup
 
 require 'minitest/autorun'
 
+CONTEXTS = Hash.new do |hash, type|
+  config_file = File.expand_path("../../../config/test/#{type}", __FILE__)
+  context     = Chart::Context.create(
+    :config_path => nil,
+    :config_file => config_file,
+    :settings    => [],
+  )
+  at_exit { context.teardown }
+  hash[type] = context
+end
+
 module TopicHelper
   require 'chart'
   TEST_RUN_TIME = Time.now.strftime("%Y%m%d%H%M%S")
@@ -14,24 +25,36 @@ module TopicHelper
     File.join(TEST_RUN_TIME, name, *suffix)
   end
 
-  def execute(*args)
-    Chart.conn.execute(*args)
+  def context
+    @context ||= CONTEXTS[:cassandra]
   end
 
-  def setup
-    unless Chart::Topic.connected?
-      Chart::Topic.connect
-      at_exit { Chart::Topic.connection.close }
-    end
-    super
+  def storage
+    context.storage
+  end
+
+  def execute(*args)
+    storage.execute(*args)
   end
 
   def topic_class
-    raise NotImplementedError
+    Chart::Topic
+  end
+
+  def list(*args)
+    context.list(*args)
+  end
+
+  def find(*args)
+    context.find(*args)
+  end
+
+  def create(*args)
+    context.create(topic_class.type, *args)
   end
 
   def assert_projection(projection, data, expected)
-    topic = topic_class.create(test_topic_id)
+    topic = create(test_topic_id)
     topic.save_data(data)
 
     x_values  = data.map(&:first).sort

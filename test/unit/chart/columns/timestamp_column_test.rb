@@ -1,11 +1,11 @@
 #!/usr/bin/env ruby
 require File.expand_path('../../../helper', __FILE__)
-require File.expand_path('../../column_test', __FILE__)
+require File.expand_path('../../../helpers/column_tests', __FILE__)
 require 'chart/columns/timestamp_column'
 
 class Chart::Columns::TimestampColumnTest < Minitest::Test
   TimestampColumn = Chart::Columns::TimestampColumn
-  include ColumnTest
+  include ColumnTests
 
   def column_class
     TimestampColumn

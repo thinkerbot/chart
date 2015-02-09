@@ -17,8 +17,8 @@ options:
 
 }.lstrip
 
-    opts.on("-e", "--environment ENV", "environment (#{options[:environment]})") do |value|
-      options[:environment] = value
+    opts.on("-c", "--config-file CONFIG_FILE", "config file (#{options[:config_file]})") do |value|
+      options[:config_file] = value
     end
 
     opts.on("-h", "--help", "print this help") do
@@ -26,6 +26,10 @@ options:
       puts
       puts Chart.version
       exit
+    end
+
+    opts.on("-o", "--option KEY=VALUE", "override config option") do |value|
+      options[:settings] << value
     end
 
     opts.on("-p", "--projection PROJECTION", "projection (#{options[:projection]})") do |value|
@@ -36,7 +40,7 @@ options:
 
   range_str, *ids = ARGV; ARGV.clear
   range_str = nil if range_str == '-'
-  topics = ids.map {|id| Chart::Topic.find(id) || raise("not found: #{id.inspect}") }
+  topics = ids.map {|id| Chart.find(id) || raise("not found: #{id.inspect}") }
 
   CSV($stdout) do |csv|
     topics.each do |topic|

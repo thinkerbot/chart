@@ -1,0 +1,13 @@
+storage.type                    cassandra
+storage.connection_timeout      5
+storage.connections_per_node    1
+storage.default_consistency     one
+storage.hosts                   192.168.33.10
+storage.port                    9042
+storage.keyspace                chart_development
+# storage.credentials.username 
+# storage.credentials.password 
+
+# log.level  
+# log.format   
+# log.datetime_format

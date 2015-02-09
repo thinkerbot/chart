@@ -6,14 +6,12 @@ class Chart::TopicTest < Minitest::Test
   include TopicHelper
   include Chart::Topics
 
-  Topic = Chart::Topic
-
   #
   # save_data
   #
 
   def test_save_data_saves_data_to_data_table
-    topic = IITopic.new(test_topic_id)
+    topic = create(test_topic_id)
     topic.save_data [
       [0, 1],
       [1, 2],
@@ -30,8 +28,8 @@ class Chart::TopicTest < Minitest::Test
   # find_data
   #
 
-  def create_ii_topic_with_data
-    topic = IITopic.create(test_topic_id)
+  def create_topic_with_data
+    topic = create(test_topic_id)
     topic.save_data([
       [0, 1],
       [1, 2],
@@ -42,7 +40,7 @@ class Chart::TopicTest < Minitest::Test
   end
 
   def test_find_data_reads_data_from_data_table_between_min_and_max_inclusive
-    topic = create_ii_topic_with_data
+    topic = create_topic_with_data
     data  = topic.find_data(1, 2)
     assert_equal [
       [1, 2],
@@ -51,7 +49,7 @@ class Chart::TopicTest < Minitest::Test
   end
 
   def test_find_data_respects_boundary
-    topic = create_ii_topic_with_data
+    topic = create_topic_with_data
 
     data  = topic.find_data(1, 2, '[]')
     assert_equal [

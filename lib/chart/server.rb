@@ -18,6 +18,7 @@ module Chart
     set :method_override, true
     set :bind, "0.0.0.0"
     set :port, 4567
+    set :context, nil
 
     # curl -X POST -d '{"x":"X"}' -H "Content-Type: application/json" http://localhost:4567/
     # curl -X POST -F 'config={"x":"X"}' -H "Accept: application/json" http://localhost:4567/chart/two
@@ -30,6 +31,10 @@ module Chart
 
     get('/data/*')    { read_data(params[:splat][0], params[:x], params[:projection]) }
     post('/data/*')   { write_data(params[:splat][0], parse_data) }
+
+    def context
+      settings.context
+    end
 
     def parse_data
       case request.content_type
@@ -46,7 +51,7 @@ module Chart
     end
 
     def list
-      ids = Topic.list
+      ids = context.list
       respond_to do |f|
         f.html { erb :index, :locals => {:ids => ids } }
         f.json { {"ids" => ids}.to_json }
@@ -54,7 +59,7 @@ module Chart
     end
 
     def find(id)
-      Topic.find(id) || halt(404, "not found: #{id.inspect}")
+      context.find(id) || halt(404, "not found: #{id.inspect}")
     end
 
     def show(id)
@@ -72,11 +77,11 @@ module Chart
       type   = attrs.fetch("type", 'ii')
       config = attrs.fetch("config", {})
 
-      if existing_topic = Topic.find(id)
+      if existing_topic = context.find(id)
         halt(422, "already exists: #{id.inspect}")
       end
 
-      topic  = Topic.create(id, type, config)
+      topic  = context.create(type, id, config)
       respond_to do |f|
         f.html { redirect "/#{id}" }
         f.json { topic.to_json }

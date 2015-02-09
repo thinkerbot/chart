@@ -1,59 +1,10 @@
-require 'chart/connections'
+require 'chart/storage'
 require 'chart/columns'
 require 'chart/projection'
 
 module Chart
   class Topic
     class << self
-      def connection
-        @connection || raise("connection is not set")
-      end
-
-      def connect(options = {})
-        disconnect
-        database_type = options[:database_type] || Connection.guess_database_type(options)
-        connection_class = Connections.lookup(database_type)
-        @connection = connection_class.setup(options)
-        self
-      end
-
-      def disconnect
-        if connected?
-          @connection.close
-          @connection = nil
-        end
-        self
-      end
-
-      def connected?
-        @connection ? true : false
-      end
-
-      def list
-        connection.select_topic_ids
-      end
-
-      def find(id)
-        return nil if id.nil?
-
-        id, type, config = connection.select_topic_by_id(id)
-        if type
-          topic_class = topic_class_for_type(type)
-          topic_class.new(id, config)
-        else
-          nil
-        end
-      end
-
-      def create(id, type = self.type, config = {})
-        topic_class = topic_class_for_type(type)
-        topic_class.new(id, config).save
-      end
-
-      def topic_class_for_type(type)
-        Topics.const_get("#{type.upcase}Topic") or raise("no such type: #{type.inspect}")
-      end
-
       def inherited(subclass)
         Topic::TYPES << subclass.type
       end
@@ -76,21 +27,18 @@ module Chart
     TYPES = []
     PROJECTIONS = {}
 
+    attr_reader :storage
     attr_reader :id
-    attr_reader :type
     attr_reader :config
 
-    def initialize(id, config = {})
+    def initialize(storage, id, config = {})
+      @storage = storage
       @id = id
       @config = config
     end
 
     def type
       self.class.type
-    end
-
-    def connection
-      Topic.connection
     end
 
     def [](key)
@@ -114,7 +62,7 @@ module Chart
     #
 
     def save
-      connection.insert_topic(id, type, config)
+      storage.insert_topic(type, id, config)
       self
     end
 
@@ -126,17 +74,17 @@ module Chart
 
     def save_datum(x, *args)
       pkey = x_column.pkey(x)
-      connection.insert_datum(id, type, pkey, x, *args)
+      storage.insert_datum(type, id, pkey, x, *args)
     end
 
     def save_datum_async(x, *args)
       pkey = x_column.pkey(x)
-      connection.insert_datum_async(id, type, pkey, x, *args)
+      storage.insert_datum_async(type, id, pkey, x, *args)
     end
 
     def find_data(xmin, xmax, boundary = '[]')
       pkeys = x_column.pkeys_for_range(xmin, xmax)
-      connection.select_data(id, type, pkeys, xmin, xmax, boundary)
+      storage.select_data(type, id, pkeys, xmin, xmax, boundary)
     end
 
     def projections_for(projection_type)

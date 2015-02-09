@@ -7,10 +7,13 @@ class Chart::ServerTest < Minitest::Test
   include Rack::Test::Methods
   include TopicHelper
 
-  Topic = Chart::Topic
-
   def app
     Chart::Server
+  end
+
+  def setup
+    super
+    app.set(:context, context)
   end
 
   #
@@ -23,8 +26,8 @@ class Chart::ServerTest < Minitest::Test
   end
 
   def test_index_lists_topics_by_id
-    Topic.create(test_topic_id("a"))
-    Topic.create(test_topic_id("b"))
+    create(test_topic_id("a"))
+    create(test_topic_id("b"))
 
     get '/topics'
     assert last_response.body.include?(test_topic_id("a"))
@@ -36,7 +39,7 @@ class Chart::ServerTest < Minitest::Test
   #
 
   def test_get_existing_topic_returns_ok
-    Topic.create(test_topic_id)
+    create(test_topic_id)
     get "/topics/#{test_topic_id}"
     assert last_response.ok?
   end
@@ -51,26 +54,26 @@ class Chart::ServerTest < Minitest::Test
   #
 
   def test_post_to_topic_id_creates_topic
-    assert_equal nil, Topic.find(test_topic_id)
+    assert_equal nil, find(test_topic_id)
     post "/topics/#{test_topic_id}"
-    assert_equal test_topic_id, Topic.find(test_topic_id).id
+    assert_equal test_topic_id, find(test_topic_id).id
   end
 
   def test_post_to_topic_id_with_config_creates_topic_with_config
     post "/topics/#{test_topic_id}", :topic => {:config => {"a" => "A"}}
-    assert_equal "A", Topic.find(test_topic_id).config["a"]
+    assert_equal "A", find(test_topic_id).config["a"]
   end
 
   def test_post_to_existing_topic_id_causes_error_and_does_nothing
     post "/topics/#{test_topic_id}", :topic => {:config => {"a" => "A"}}
     post "/topics/#{test_topic_id}", :topic => {:config => {"a" => "B"}}
     assert !last_response.ok?
-    assert_equal "A", Topic.find(test_topic_id).config["a"]
+    assert_equal "A", find(test_topic_id).config["a"]
   end
 
   def test_post_guesses_ii_type_if_unspecified
     post "/topics/#{test_topic_id}"
-    assert_equal "ii", Topic.find(test_topic_id).type
+    assert_equal "ii", find(test_topic_id).type
   end
 
   #
@@ -78,7 +81,7 @@ class Chart::ServerTest < Minitest::Test
   #
 
   def create_ii_topic
-    topic = Topic.create(test_topic_id)
+    topic = create(test_topic_id)
     topic.save_data([
       [0, 1],
       [1, 2],
@@ -105,7 +108,7 @@ class Chart::ServerTest < Minitest::Test
       ].join("\n")
     }
 
-    topic = Topic.find(test_topic_id)
+    topic = find(test_topic_id)
     assert_equal reverse_data_from_1_to_2, topic.find_data(1, 2, "[]")
   end
 
@@ -120,7 +123,7 @@ class Chart::ServerTest < Minitest::Test
       [3, 4].join(","),
     ].join("\n")
 
-    topic = Topic.find(test_topic_id)
+    topic = find(test_topic_id)
     assert_equal reverse_data_from_1_to_2, topic.find_data(1, 2, "[]")
   end
 
@@ -135,7 +138,7 @@ class Chart::ServerTest < Minitest::Test
       [3, 4],
     ].to_json
 
-    topic = Topic.find(test_topic_id)
+    topic = find(test_topic_id)
     assert_equal reverse_data_from_1_to_2, topic.find_data(1, 2, "[]")
   end
 

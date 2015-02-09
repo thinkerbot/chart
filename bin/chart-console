@@ -14,31 +14,18 @@ begin
     opts.banner = %{
 usage: chart-console [options]
 
-  Gives you a console with the cql connection set up as normal.
+  Gives you a console with the chart context set up as normal.
 
     $ chart-console
-    > conn.exec("select * from charts")
+    > storage.exec("select * from charts")
     ...
 
 options:
 
 }.lstrip
 
-    opts.on("-c", "--config-file CONFIG_FILE", "database config file (#{options[:database_file]})") do |value|
-      options[:database_file] = value
-    end
-
-    opts.on("-H", "--hosts HOST[,HOST]", "override hosts config") do |value|
-      options[:config][:hosts] = value.split(',')
-    end
-
-    opts.on("-e", "--environment ENV", "environment (#{options[:environment]})") do |value|
-      options[:environment] = value
-    end
-
-    opts.on("-o", "--option KEY=VALUE", "override config option") do |option|
-      key, value = option.split('=', 2)
-      options[:config][key.to_sym] = value == '-' ? nil : value
+    opts.on("-c", "--config-file CONFIG_FILE", "config file (#{options[:config_file]})") do |value|
+      options[:config_file] = value
     end
 
     opts.on("-h", "--help", "print this help") do
@@ -48,11 +35,11 @@ options:
       exit
     end
 
-    opts.on("-P", "--port PORT", "override port config") do |value|
-      options[:config][:port] = value
+    opts.on("-o", "--option KEY=VALUE", "override config option") do |value|
+      options[:settings] << value
     end
 
-    opts.on("-p", "--print-cmd", "print database shell command") do
+    opts.on("-p", "--print-cmd", "print storage shell command") do
       options[:mode] = :print_shell_command
     end
 
@@ -60,7 +47,7 @@ options:
       options[:mode] = :print_config
     end
 
-    opts.on("-q", "--shell", "launch database shell with argv") do
+    opts.on("-q", "--shell", "launch storage shell with argv") do
       options[:mode] = :launch_shell
     end
 
@@ -75,18 +62,15 @@ options:
   end.parse!
   Chart.setup(options)
 
-  def conn
-    Chart.conn
-  end
-
-  def config
-    conn.config
+  def storage
+    Chart.context.storage
   end
 
   mode = options[:mode]
   case mode
   when :console
     ARGV.clear
+    at_exit { Chart.reset }
     IRB.start(__FILE__)
 
   when :print_config
@@ -97,27 +81,21 @@ options:
     puts print_config.to_yaml
 
   when :launch_shell, :print_shell_command
-    command, env = conn.connection_command
-    command = Shellwords.shelljoin(command + ARGV)
+    command, env = storage.command_env
+    command = (command + ARGV)
 
     if mode == :print_shell_command
-      puts command
+      puts command.shelljoin
     else
-      env.each_pair {|key, value| ENV[key] = value }
-      exec command
+      exec env, *command
     end
 
   else
-    Chart.setup(options)
-    rows = conn.execute(mode)
+    rows = storage.execute(mode)
     CSV($stdout) do |csv|
       rows.each do |row|
         csv << row.values
       end
     end
   end
-rescue
-  raise if $DEBUG
-  $stderr.puts $!.message
-  exit 1
 end

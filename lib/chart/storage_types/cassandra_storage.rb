@@ -1,28 +1,57 @@
-require 'chart/connection'
+require 'chart/storage'
 require 'cassandra'
 
 module Chart
-  module Connections
-    class CassandraConnection < Connection
+  module StorageTypes
+    class CassandraStorage < Storage
       class << self
-        def load_config(options = {})
-          config = super
+        def convert_to_options(configs)
+          configs = default_configs.merge(configs)
           {
-            :hosts                => config.fetch('hosts'),
-            :port                 => config.fetch('port', 9042),
-            :keyspace             => config.fetch('keyspace'),
-            :connection_timeout   => config.fetch('connection_timeout', 5),
+            :hosts              => configs['hosts'].split(','),
+            :port               => configs['port'].to_i,
+            :keyspace           => configs['keyspace'],
+            :connection_timeout => configs['connection_timeout'].to_i,
           }
         end
 
-        def connection_command(configs)
+        def convert_to_configs(options)
+          options = default_options.merge(options)
+          {
+            'hosts'               => options[:hosts].join(','),
+            'port'                => options[:port].to_s,
+            'keyspace'            => options[:keyspace],
+            'connection_timeout'  => options[:connection_timeout].to_s,
+          }
+        end
+
+        def default_options
+          {
+            :hosts    => ['127.0.0.1'],
+            :port     => 9042,
+            :keyspace => 'default',
+            :connection_timeout => 5,
+          }
+        end
+
+        def command_env(options = {})
+          options = default_options.merge(options)
+
           # don't use port as it is... maybe a different protocol? needs to be 9160
-          command = ["cqlsh", configs[:hosts][0]]
-          if keyspace = configs[:keyspace]
+          host = options[:hosts].first
+          keyspace = options[:keyspace]
+
+          command = ["cqlsh", host]
+          unless keyspace.to_s.strip.empty?
             command += ["-k", keyspace]
           end
+
           [command.map(&:to_s), {}]
         end
+
+        #
+        # helpers
+        #
 
         def table_name_for(type)
           "#{type}_data"
@@ -57,22 +86,19 @@ module Chart
         end
       end
 
-      attr_reader :prepared_statements
-
-      def initialize(config)
-        super
-        @prepared_statements = Hash.new {|hash, query| hash[query] = client.prepare(query) }
-      end
-
       def cluster
-        @cluster ||= Cassandra.cluster(config.merge(:logger => logger))
+        @cluster ||= Cassandra.cluster(options)
       end
 
       def client
-        @client ||= cluster.connect(config[:keyspace])
+        @client ||= cluster.connect(options[:keyspace])
       end
 
-      # Connection
+      def prepared_statements
+        @prepared_statements ||= Hash.new {|hash, query| hash[query] = client.prepare(query) }
+      end
+
+      # Storage
 
       def close
         if @client
@@ -108,23 +134,23 @@ module Chart
       end
 
       def select_topic_by_id(id)
-        rows = execute("select id, type, config from topics where id = ?", id)
+        rows = execute("select type, id, config from topics where id = ?", id)
 
         if row = rows.first
-          id, type, config_json = row.values
-          [id, type, JSON.parse(config_json)]
+          type, id, config_json = row.values
+          [type, id, JSON.parse(config_json)]
         else
           nil
         end
       end
 
-      def insert_topic(id, type, config)
-        execute("insert into topics (id, type, config) values (?, ?, ?)", id, type, config.to_json)
+      def insert_topic(type, id, config)
+        execute("insert into topics (type, id, config) values (?, ?, ?)", type, id, config.to_json)
       end
 
       # Data
 
-      def select_data(id, type, pkeys, xmin, xmax, boundary)
+      def select_data(type, id, pkeys, xmin, xmax, boundary)
         select_query = select_data_queries[type][boundary] or raise("invalid boundary condition: #{boundary.inspect}")
         data = []
         pkeys.each do |pkey|
@@ -134,11 +160,11 @@ module Chart
         data
       end
 
-      def insert_datum(id, type, pkey, *datum)
+      def insert_datum(type, id, pkey, *datum)
         execute(insert_datum_queries[type], pkey, id, *datum)
       end
 
-      def insert_datum_async(id, type, pkey, *datum)
+      def insert_datum_async(type, id, pkey, *datum)
         execute_async(insert_datum_queries[type], pkey, id, *datum)
       end
 

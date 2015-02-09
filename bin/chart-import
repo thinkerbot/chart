@@ -24,8 +24,8 @@ options:
       options[:auto_create] = true
     end
 
-    opts.on("-e", "--environment ENV", "environment (#{options[:environment]})") do |value|
-      options[:environment] = value
+    opts.on("-c", "--config-file CONFIG_FILE", "config file (#{options[:config_file]})") do |value|
+      options[:config_file] = value
     end
 
     opts.on("-h", "--help", "print this help") do
@@ -39,6 +39,10 @@ options:
       options[:id] = value
     end
 
+    opts.on("-o", "--option KEY=VALUE", "override config option") do |value|
+      options[:settings] << value
+    end
+
     opts.on("-t", "--type TYPE", "the data type (#{options[:type]})") do |value|
       options[:type] = value
     end
@@ -49,13 +53,13 @@ options:
   type = options[:type]
   auto_create = options[:auto_create]
 
-  topic = Chart::Topic.find(id)
+  topic = Chart.find(id)
   data  = CSV.new(ARGF)
 
   if topic.nil?
     if auto_create
       id ||= SecureRandom.uuid
-      topic = Chart::Topic.create(id, type)
+      topic = Chart.create(type, id)
     else
       raise("not found: #{id.inspect}")
     end
