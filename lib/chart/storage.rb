@@ -55,6 +55,13 @@ module Chart
     def initialize(options = {}, logger = nil)
       @options = self.class.default_options.merge(options)
       @logger  = logger || Logging.logger[self]
+      @column_classes = {}
+    end
+
+    def column_classes(type)
+      @column_classes[type] ||= begin
+        type.chars.map {|c| Column.lookup("#{self.class.type}.#{c}") }
+      end
     end
 
     # Logging

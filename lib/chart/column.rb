@@ -1,7 +1,8 @@
 module Chart
   class Column
     class << self
-      def register(type = self.type)
+      def register_for_storage(storage_type)
+        type = "#{storage_type}.#{self.type}"
         TYPES[type] = self
       end
 

@@ -16,7 +16,7 @@ module Chart
           str =~ /^-?\d+\.\d+$/
         end
       end
-      register
+      register_for_storage "cassandra"
 
       def deserialize(str)
         Float(str)

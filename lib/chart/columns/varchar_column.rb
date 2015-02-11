@@ -12,7 +12,7 @@ module Chart
           "s"
         end
       end
-      register
+      register_for_storage "cassandra"
 
       def deserialize(str)
         str

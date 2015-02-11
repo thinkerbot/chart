@@ -16,12 +16,6 @@ module Chart
       def lookup(type)
         TYPES[type] or raise "unknown topic type: #{type.inspect}"
       end
-
-      def column_classes
-        @column_classes ||= begin
-          type.chars.map {|c| Column.lookup(c) }
-        end
-      end
     end
     include Projection
 
@@ -51,7 +45,7 @@ module Chart
     end
 
     def columns
-      @columns ||= self.class.column_classes.map {|c| c.new }
+      @columns ||= storage.column_classes(self.class.type).map {|c| c.new }
     end
 
     def x_column

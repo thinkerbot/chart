@@ -18,7 +18,7 @@ module Chart
           (Time.iso8601(str) rescue false) ? true : false
         end
       end
-      register
+      register_for_storage "cassandra"
 
       def deserialize(str)
         (str.kind_of?(Time) ? str : Time.iso8601(str)).in_time_zone
