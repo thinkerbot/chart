@@ -1,5 +1,5 @@
 require File.expand_path('../../helpers/storage_helper', __FILE__)
-require 'chart/topics'
+require 'chart/topic'
 
 module TopicHelper
   include StorageHelper
@@ -9,7 +9,7 @@ module TopicHelper
   end
 
   def topic_class
-    Chart::Topics.lookup(topic_type)
+    Chart::Topic.lookup(topic_type)
   end
 
   def init_topic(*args)

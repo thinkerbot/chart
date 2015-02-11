@@ -11,8 +11,16 @@ module Chart
         new(options, logger)
       end
 
+      def register(type = self.type)
+        TYPES[type] = self
+      end
+
       def type
-        @type ||= to_s.split("::").last.downcase.chomp("storage")
+        @type ||= self.to_s.split("::").last.downcase.chomp("storage")
+      end
+
+      def lookup(type)
+        TYPES[type] or raise "unknown storage type: #{type.inspect}"
       end
 
       def convert_to_options(configs)
@@ -39,6 +47,7 @@ module Chart
         Config.register_section(subclass.type, subclass.default_configs)
       end
     end
+    TYPES = {}
 
     attr_reader :options
     attr_reader :logger

@@ -1,5 +1,6 @@
 require 'chart/storage'
-require 'cassandra'
+require 'json'
+autoload :Cassandra, 'cassandra'
 
 module Chart
   module StorageTypes
@@ -85,6 +86,7 @@ module Chart
           column_names_for(type).zip(typestrs_for(type))
         end
       end
+      register
 
       def cluster
         @cluster ||= Cassandra.cluster(options)

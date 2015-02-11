@@ -1,4 +1,4 @@
-require 'chart/storage_types'
+require 'chart/storage'
 
 module StorageHelper
   SHARED_STORAGE = Hash.new do |hash, type|
@@ -8,7 +8,7 @@ module StorageHelper
       :config_file => config_file,
       :settings    => [],
     )
-    storage_class = Chart::StorageTypes.lookup(type)
+    storage_class = Chart::Storage.lookup(type)
     storage = storage_class.create(config)
     at_exit { storage.close }
     hash[type] = storage

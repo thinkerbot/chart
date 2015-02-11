@@ -10,7 +10,7 @@ module Chart
           1.day.to_i
         end
 
-        def signature
+        def type
           "t"
         end
 
@@ -18,6 +18,7 @@ module Chart
           (Time.iso8601(str) rescue false) ? true : false
         end
       end
+      register
 
       def deserialize(str)
         (str.kind_of?(Time) ? str : Time.iso8601(str)).in_time_zone

@@ -1,18 +1,23 @@
 module Chart
   class Column
     class << self
+      def register(type = self.type)
+        TYPES[type] = self
+      end
+
+      def type
+        raise NotImplementedError
+      end
+
+      def lookup(type)
+        TYPES[type] or raise "unknown column type: #{type.inspect}"
+      end
+
       def default_bucket_size
         nil
       end
-
-      def signature
-        raise NotImplementedError
-      end
-
-      def typestr
-        raise NotImplementedError
-      end
     end
+    TYPES = {}
 
     attr_reader :bucket_size
 

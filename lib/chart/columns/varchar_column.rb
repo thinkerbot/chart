@@ -8,10 +8,11 @@ module Chart
           nil
         end
 
-        def signature
+        def type
           "s"
         end
       end
+      register
 
       def deserialize(str)
         str

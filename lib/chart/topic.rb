@@ -5,26 +5,27 @@ require 'chart/projection'
 module Chart
   class Topic
     class << self
-      def inherited(subclass)
-        Topic::TYPES << subclass.type
+      def register(type = self.type)
+        TYPES[type] = self
       end
 
       def type
-        @type ||= begin
-          prefix = self.to_s.split("::").last.downcase.chomp("topic")
-          prefix.empty? ? "ii" : prefix
-        end
+        @type ||= self.to_s.split("::").last.downcase.chomp("topic")
+      end
+
+      def lookup(type)
+        TYPES[type] or raise "unknown topic type: #{type.inspect}"
       end
 
       def column_classes
         @column_classes ||= begin
-          type.chars.map {|c| Columns.lookup(c) }
+          type.chars.map {|c| Column.lookup(c) }
         end
       end
     end
     include Projection
 
-    TYPES = []
+    TYPES = {}
     PROJECTIONS = {}
 
     attr_reader :storage

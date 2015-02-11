@@ -8,7 +8,7 @@ module Chart
           100000
         end
 
-        def signature
+        def type
           "d"
         end
 
@@ -16,6 +16,7 @@ module Chart
           str =~ /^-?\d+\.\d+$/
         end
       end
+      register
 
       def deserialize(str)
         Float(str)

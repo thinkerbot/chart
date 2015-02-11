@@ -1,11 +1,11 @@
 #!/usr/bin/env ruby
 require File.expand_path('../../../helper', __FILE__)
 require File.expand_path('../../../helpers/topic_helper', __FILE__)
+require 'chart/storage_types/cassandra_storage'
 require 'chart/topics/iii_topic'
 
 class Chart::Topics::IIITopicTest < Minitest::Test
   include TopicHelper
-  include Chart::Topics
 
   def storage_type
     'cassandra'

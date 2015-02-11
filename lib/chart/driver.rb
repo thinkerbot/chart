@@ -9,7 +9,7 @@ module Chart
         configs = config.section('storage')
         type    = configs['type']
 
-        storage_class = StorageTypes.lookup(type)
+        storage_class = Storage.lookup(type)
         storage       = storage_class.create(config)
 
         new(storage)
@@ -37,7 +37,7 @@ module Chart
 
       type, id, config = storage.select_topic_by_id(id)
       if type
-        topic_class = Topics.lookup(type)
+        topic_class = Topic.lookup(type)
         topic_class.new(storage, id, config)
       else
         nil
@@ -45,7 +45,7 @@ module Chart
     end
 
     def create(type, id, config = {})
-      topic_class = Topics.lookup(type)
+      topic_class = Topic.lookup(type)
       topic_class.new(storage, id, config).save
     end
   end

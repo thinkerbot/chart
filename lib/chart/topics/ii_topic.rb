@@ -8,6 +8,7 @@ module Chart
         "xy"        => [["x", "y"], []],
         "histogram" => [["y", "n"], [:xy_to_y]],
       }
+      register
     end
   end
 end
