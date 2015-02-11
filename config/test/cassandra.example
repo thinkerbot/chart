@@ -1,9 +1,9 @@
 storage.type                    cassandra
-storage.connection_timeout      5
-storage.connections_per_node    1
-storage.default_consistency     one
-storage.hosts                   192.168.33.10
-storage.port                    9042
-storage.keyspace                chart_test
+cassandra.connection_timeout      5
+cassandra.connections_per_node    1
+cassandra.default_consistency     one
+cassandra.hosts                   192.168.33.10
+cassandra.port                    9042
+cassandra.keyspace                chart_test
 # storage.credentials.username 
 # storage.credentials.password 

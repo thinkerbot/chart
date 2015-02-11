@@ -1,35 +1,25 @@
+require File.expand_path('../../helpers/storage_helper', __FILE__)
+
 module Chart
   module StorageAPITests
-    TEST_RUN_TIME = Time.now.strftime("%Y%m%d%H%M%S")
-
-    def test_topic_id(*suffix)
-      File.join(TEST_RUN_TIME, name, *suffix)
-    end
-
-    def context
-      raise NotImplementedError
-    end
-
-    def storage
-      context.storage
-    end
+    include StorageHelper
 
     # Topics
 
     def test_topic_lifecycle
-      assert_equal nil, storage.select_topic_by_id(test_topic_id)
+      assert_equal nil, storage.select_topic_by_id(test_id)
 
-      inputs = ["II", test_topic_id, {}]
+      inputs = ["II", test_id, {}]
       storage.insert_topic(*inputs)
 
-      outputs = storage.select_topic_by_id(test_topic_id)
+      outputs = storage.select_topic_by_id(test_id)
       assert_equal inputs, outputs
     end
 
     def test_topic_selection
-      a = "#{test_topic_id}/a"
-      b = "#{test_topic_id}/b"
-      c = "#{test_topic_id}/c"
+      a = "#{test_id}/a"
+      b = "#{test_id}/b"
+      c = "#{test_id}/c"
 
       ids = [a, b, c]
       assert_equal [], ids & storage.select_topic_ids
@@ -41,7 +31,7 @@ module Chart
     # Data
 
     def test_data_lifecycle
-      type, id = 'II', test_topic_id
+      type, id = 'II', test_id
 
       data_with_pkey = [
         [0, 0, 1],
@@ -82,7 +72,7 @@ module Chart
     end
 
     def test_insert_datum_async
-      type, id = 'II', test_topic_id
+      type, id = 'II', test_id
       pkey = 0
       data = [
         [0, 1],

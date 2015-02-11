@@ -1,30 +1,35 @@
 require "chart/version"
-require "chart/context"
-require "chart/topics"
+require "chart/driver"
 
 module Chart
   module_function
 
   def options(overrides = {})
-    Context.options(overrides)
+    Config.options(overrides)
   end
 
   def setup(options = {})
-    @context = Context.create(options)
+    @config = Config.create(options)
+    @driver = Driver.create(@config)
     self
   end
 
-  def context
-    @context or raise("no context has been set")
+  def config
+    @config
+  end
+
+  def driver
+    @driver
   end
 
   def setup?
-    context ? true : false
+    @config ? true : false
   end
 
   def teardown
-    context.teardown if context
-    @context = nil
+    driver.teardown if driver
+    @driver = nil
+    @config = nil
     self
   end
 
@@ -37,14 +42,14 @@ module Chart
   #
 
   def list
-    context.list
+    driver.list
   end
 
   def find(id)
-    context.find(id)
+    driver.find(id)
   end
 
   def create(type, id, config = {})
-    context.create(type, id, config)
+    driver.create(type, id, config)
   end
 end

@@ -1,13 +1,18 @@
 #!/usr/bin/env ruby
 require File.expand_path('../../../helper', __FILE__)
+require File.expand_path('../../../helpers/topic_helper', __FILE__)
 require 'chart/topics/ii_topic'
 
 class Chart::Topics::IITopicTest < Minitest::Test
   include TopicHelper
   include Chart::Topics
 
-  def topic_class
-    IITopic
+  def storage_type
+    'cassandra'
+  end
+
+  def topic_type
+    'ii'
   end
 
   #

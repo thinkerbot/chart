@@ -1,6 +1,6 @@
 storage.type       postgres
-storage.host       192.168.33.10
-storage.database   development
-storage.port       5432
-storage.username   development
-storage.password 
+postgres.host       192.168.33.10
+postgres.database   development
+postgres.port       5432
+postgres.username   development
+postgres.password 

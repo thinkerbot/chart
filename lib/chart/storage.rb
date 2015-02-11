@@ -1,9 +1,20 @@
-require 'logging'
+require 'chart/config'
 require 'chart/async_interface'
 
 module Chart
   class Storage
     class << self
+      def create(config)
+        logger  = config.logger(self)
+        configs = config.section(type)
+        options = convert_to_options(configs)
+        new(options, logger)
+      end
+
+      def type
+        @type ||= to_s.split("::").last.downcase.chomp("storage")
+      end
+
       def convert_to_options(configs)
         {}
       end
@@ -20,13 +31,12 @@ module Chart
         {}
       end
 
-      def setup(configs = {}, logger = nil)
-        options = convert_to_options(configs)
-        new(options, logger)
-      end
-
       def command_env(options = {})
         raise NotImplementedError
+      end
+
+      def inherited(subclass)
+        Config.register_section(subclass.type, subclass.default_configs)
       end
     end
 

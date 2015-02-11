@@ -6,7 +6,7 @@ module Chart
     module_function
 
     def lookup(type)
-      case type
+      case type.to_s
       when IITopic.type
         IITopic
       when IIITopic.type

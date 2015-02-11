@@ -62,7 +62,7 @@ options:
   Chart::Server.set(
     :bind => options[:bind],
     :port => options[:port],
-    :context => Chart.context,
+    :driver => Chart.driver,
     :reload_templates => options[:reload_templates],
   )
   Chart::Server.run!

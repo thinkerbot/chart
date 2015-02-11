@@ -7,8 +7,8 @@ class Chart::StorageTypes::CassandraStorageTest < Minitest::Test
   CassandraStorage = Chart::StorageTypes::CassandraStorage
   include Chart::StorageAPITests
 
-  def context
-    @context ||= CONTEXTS[:cassandra]
+  def storage_type
+    'cassandra'
   end
 
   #

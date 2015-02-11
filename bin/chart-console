@@ -63,7 +63,7 @@ options:
   Chart.setup(options)
 
   def storage
-    Chart.context.storage
+    Chart.driver.storage
   end
 
   mode = options[:mode]
