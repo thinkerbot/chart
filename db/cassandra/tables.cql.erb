@@ -6,7 +6,8 @@ create table topics (
   primary key (id)
 );
 <% require 'chart/topics' %>
-<% Chart::Topic::TYPES.each do |type| %>
+<% require 'chart/storage_types' %>
+<% Chart::Topic::TYPES.each_pair do |type, topic_class| %>
 <%   table_name   = Chart::StorageTypes::CassandraStorage.table_name_for(type) %>
 <%   columns      = Chart::StorageTypes::CassandraStorage.columns_for_type(type) %>
 <%   order_columns = columns.dup; order_columns.delete_at(1) %>
