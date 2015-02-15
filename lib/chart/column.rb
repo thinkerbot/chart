@@ -17,6 +17,14 @@ module Chart
       def default_bucket_size
         nil
       end
+
+      def deserialize(str)
+        raise NotImplementedError
+      end
+
+      def serialize(value)
+        raise NotImplementedError
+      end
     end
     TYPES = {}
 
@@ -27,11 +35,11 @@ module Chart
     end
 
     def deserialize(str)
-      raise NotImplementedError
+      self.class.deserialize(str)
     end
 
     def serialize(value)
-      raise NotImplementedError
+      self.class.serialize(value)
     end
 
     def offset(value, period_str)

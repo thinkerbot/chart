@@ -9,7 +9,7 @@ module Chart
     def test_topic_lifecycle
       assert_equal nil, storage.select_topic_by_id(test_id)
 
-      inputs = ["II", test_id, {}]
+      inputs = ["ii", test_id, {}]
       storage.insert_topic(*inputs)
 
       outputs = storage.select_topic_by_id(test_id)
@@ -24,14 +24,14 @@ module Chart
       ids = [a, b, c]
       assert_equal [], ids & storage.select_topic_ids
 
-      ids.each {|id| storage.insert_topic("II", id, {}) }
+      ids.each {|id| storage.insert_topic("ii", id, {}) }
       assert_equal ids, ids & storage.select_topic_ids
     end
 
     # Data
 
     def test_data_lifecycle
-      type, id = 'II', test_id
+      type, id = 'ii', test_id
 
       data_with_pkey = [
         [0, 0, 1],
@@ -72,7 +72,7 @@ module Chart
     end
 
     def test_insert_datum_async
-      type, id = 'II', test_id
+      type, id = 'ii', test_id
       pkey = 0
       data = [
         [0, 1],

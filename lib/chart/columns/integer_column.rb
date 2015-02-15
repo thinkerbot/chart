@@ -15,16 +15,17 @@ module Chart
         def match(str)
           str =~ /^\-?\d+$/
         end
+
+        def deserialize(str)
+          Integer(str)
+        end
+
+        def serialize(value)
+          value
+        end
       end
       register_for_storage "cassandra"
-
-      def deserialize(str)
-        Integer(str)
-      end
-
-      def serialize(value)
-        value
-      end
+      register_for_storage "postgres"
 
       def offset(value, period_str)
         value + deserialize(period_str)

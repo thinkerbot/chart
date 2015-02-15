@@ -17,16 +17,17 @@ module Chart
         def match(str)
           (Time.iso8601(str) rescue false) ? true : false
         end
+
+        def deserialize(str)
+          (str.kind_of?(Time) ? str : Time.iso8601(str)).in_time_zone
+        end
+
+        def serialize(value)
+          value.in_time_zone.iso8601
+        end
       end
       register_for_storage "cassandra"
-
-      def deserialize(str)
-        (str.kind_of?(Time) ? str : Time.iso8601(str)).in_time_zone
-      end
-
-      def serialize(value)
-        value.in_time_zone.iso8601
-      end
+      register_for_storage "postgres"
 
       def offset(value, period_str)
         period = Timeseries::Period.parse(period_str)

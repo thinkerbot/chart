@@ -1,0 +1,21 @@
+drop table if exists topics;
+create table topics (
+  id     varchar,
+  type   varchar,
+  config json,
+  primary key (id)
+);
+<% require 'chart/topics' %>
+<% require 'chart/storage_types' %>
+<% Chart::Topic::TYPES.each_pair do |type, topic_class| %>
+<%   table_name   = Chart::StorageTypes::PostgresStorage.table_name_for(type) %>
+<%   columns      = Chart::StorageTypes::PostgresStorage.columns_for_type(type) %>
+<%   order_columns = columns.dup; order_columns.delete_at(1) %>
+
+drop table if exists <%= table_name %> cascade;
+create table <%= table_name %> (
+  id varchar,<% columns.each_with_index do |(name, typestr), index| %>
+  <%= name %>  <%= typestr %><%= index == columns.length - 1 ? "" : "," %><% end %>
+);
+create index <%= table_name %>_id_x_idx on <%= table_name %> (id, x desc);
+<% end %>

@@ -1,4 +1,5 @@
 require 'chart/config'
+require 'chart/columns'
 require 'chart/async_interface'
 
 module Chart

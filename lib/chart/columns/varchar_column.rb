@@ -11,16 +11,17 @@ module Chart
         def type
           "s"
         end
+
+        def deserialize(str)
+          str
+        end
+
+        def serialize(value)
+          value
+        end
       end
       register_for_storage "cassandra"
-
-      def deserialize(str)
-        str
-      end
-
-      def serialize(value)
-        value
-      end
+      register_for_storage "postgres"
     end
   end
 end
