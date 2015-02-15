@@ -1,23 +1,27 @@
 module Chart
   class Column
     class << self
-      def register_for_storage(storage_type)
-        type = "#{storage_type}.#{self.type}"
-        TYPES[type] = self
+      def inherited(subclass)
+        TYPES[subclass.type] = subclass
       end
 
       def type
-        raise NotImplementedError
+        @type ||= self.to_s.split("::").last.downcase.chomp("column")
       end
 
       def lookup(type)
         TYPES[type] or raise "unknown column type: #{type.inspect}"
       end
 
+      def instance
+        @instance ||= new
+      end
+
       def default_bucket_size
         nil
       end
     end
+
     TYPES = {}
 
     attr_reader :bucket_size

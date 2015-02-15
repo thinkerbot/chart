@@ -2,21 +2,16 @@ require 'chart/column'
 
 module Chart
   module Columns
-    class IntegerColumn < Column
+    class IColumn < Column
       class << self
         def default_bucket_size
           100000
-        end
-
-        def type
-          "i"
         end
 
         def match(str)
           str =~ /^\-?\d+$/
         end
       end
-      register_for_storage "cassandra"
 
       def deserialize(str)
         Integer(str)

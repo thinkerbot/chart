@@ -1,58 +1,51 @@
 require 'chart/storage'
 require 'json'
-autoload :Cassandra, 'cassandra'
+autoload :PG, 'pg'
 
 module Chart
   module StorageTypes
-    class CassandraStorage < Storage
+    class PostgresStorage < Storage
       class << self
         def convert_to_options(configs)
           configs = default_configs.merge(configs)
           {
-            :hosts              => configs['hosts'].split(','),
-            :port               => configs['port'].to_i,
-            :keyspace           => configs['keyspace'],
-            :connection_timeout => configs['connection_timeout'].to_i,
+            :host     => configs['host'],
+            :port     => configs['port'].to_i,
+            :dbname   => configs['database'],
+            :user     => configs['username'],
+            :password => configs['password'],
           }
         end
 
         def convert_to_configs(options)
           options = default_options.merge(options)
           {
-            'hosts'               => options[:hosts].join(','),
-            'port'                => options[:port].to_s,
-            'keyspace'            => options[:keyspace],
-            'connection_timeout'  => options[:connection_timeout].to_s,
+            'host'     => options[:host],
+            'port'     => options[:port].to_s,
+            'database' => options[:dbname],
+            'username' => options[:user],
+            'password' => options[:password],
           }
         end
 
         def default_options
           {
-            :hosts    => ['127.0.0.1'],
-            :port     => 9042,
-            :keyspace => 'default',
-            :connection_timeout => 5,
+            :host     => '127.0.0.1',
+            :port     => 5432,
+            :dbname   => '',
+            :user     => '',
+            :password => '',
           }
         end
 
         def command_env(options = {})
           options = default_options.merge(options)
 
-          # don't use port as it is... maybe a different protocol? needs to be 9160
-          host = options[:hosts].first
-          keyspace = options[:keyspace]
-
-          command = ["cqlsh", host]
-          unless keyspace.to_s.strip.empty?
-            command += ["-k", keyspace]
-          end
-
+          env = {}
+          env["PGPASSWORD"] = options[:password] if options[:password]
+          command = ["psql", "-h", options[:host], "-p", options[:port], "-U", options[:user], "-d", options[:dbname]]
           [command.map(&:to_s), {}]
         end
-
-        #
-        # helpers
-        #
 
         def table_name_for(type)
           "#{type}_data"
@@ -74,7 +67,7 @@ module Chart
           type.chars.map do |c|
             case c
             when "d" then "double"
-            when "i" then "varint"
+            when "i" then "integer"
             when "t" then "timestamp"
             when "s" then "varchar"
             else raise "unknown column type: #{c.inspect}"
@@ -87,40 +80,38 @@ module Chart
         end
       end
 
-      def cluster
-        @cluster ||= Cassandra.cluster(options)
-      end
-
       def client
-        @client ||= cluster.connect(options[:keyspace])
+        @client ||= begin
+          client = PG::Connection.open(options)
+          client.type_map_for_results = PG::BasicTypeMapForResults.new(client)
+          client.type_map_for_queries = PG::BasicTypeMapForQueries.new(client)
+          client.set_notice_processor {|msg| logger.info(msg) }
+          client
+        end
       end
 
       def prepared_statements
-        @prepared_statements ||= Hash.new {|hash, query| hash[query] = client.prepare(query) }
+        # prepare the query and give the prepared statement a name (currently
+        # same as the query).  the prepare raises an error if if fails.
+        @prepared_statements ||= Hash.new do |hash, query|
+          name = "chart-#{hash.length}"
+          client.prepare(name, query)
+          hash[query] = name
+        end
       end
 
       # Storage
 
       def close
-        if @client
-          @client.close
-          @client.nil?
-        end
-
-        if @cluster
-          @cluster.close
-          @cluster.nil?
-        end
-
+        @client.close if @client
         @prepared_statements = nil
-
         self
       end
 
       def execute(query, *args)
         log_execute(query, args)
         statement = prepared_statements[query]
-        client.execute(statement, *args)
+        client.exec_prepared(statement, args)
       end
 
       # Topics
@@ -131,7 +122,7 @@ module Chart
       end
 
       def select_topic_by_id(id)
-        rows = execute("select type, id, config from topics where id = ?", id)
+        rows = execute("select type, id, config from topics where id = $1", id)
 
         if row = rows.first
           type, id, config_json = row.values
@@ -142,7 +133,7 @@ module Chart
       end
 
       def insert_topic(type, id, config)
-        execute("insert into topics (type, id, config) values (?, ?, ?)", type, id, config.to_json)
+        execute("insert into topics (type, id, config) values ($1, $2, $3)", type, id, config.to_json)
       end
 
       # Data
@@ -168,10 +159,10 @@ module Chart
           table_name   = self.class.table_name_for(type)
           column_names = self.class.column_names_for(type)
           cache[type] = {
-            "[]" => "select #{column_names.join(', ')} from #{table_name} where id = ? and xp = ? and x >= ? and x <= ?",
-            "[)" => "select #{column_names.join(', ')} from #{table_name} where id = ? and xp = ? and x >= ? and x <  ?",
-            "(]" => "select #{column_names.join(', ')} from #{table_name} where id = ? and xp = ? and x >  ? and x <= ?",
-            "()" => "select #{column_names.join(', ')} from #{table_name} where id = ? and xp = ? and x >  ? and x <  ?",
+            "[]" => "select #{column_names.join(', ')} from #{table_name} where id = $1 and xp = $2 and x >= $3 and x <= $4",
+            "[)" => "select #{column_names.join(', ')} from #{table_name} where id = $1 and xp = $2 and x >= $3 and x <  $4",
+            "(]" => "select #{column_names.join(', ')} from #{table_name} where id = $1 and xp = $2 and x >  $3 and x <= $4",
+            "()" => "select #{column_names.join(', ')} from #{table_name} where id = $1 and xp = $2 and x >  $3 and x <  $4",
           }
         end
       end
@@ -180,7 +171,7 @@ module Chart
         @insert_datum_queries ||= Hash.new do |cache, type|
           table_name   = self.class.table_name_for(type)
           column_names = self.class.column_names_for(type)
-          cache[type]  = "insert into #{table_name} (id, xp, #{column_names.join(', ')}) values (?, ?, #{column_names.map {|s| "?"}.join(', ')})"
+          cache[type]  = "insert into #{table_name} (id, xp, #{column_names.join(', ')}) values ($1, $2, #{column_names.each_with_index.map {|s, i| "$#{i + 3}"}.join(', ')})"
         end
       end
     end

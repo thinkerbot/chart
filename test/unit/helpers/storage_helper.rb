@@ -8,6 +8,10 @@ module StorageHelper
       :config_file => config_file,
       :settings    => [],
     )
+
+    require_file = "chart/storage_types/#{type}_storage"
+    require require_file
+
     storage_class = Chart::Storage.lookup(type)
     storage = storage_class.create(config)
     at_exit { storage.close }

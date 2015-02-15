@@ -1,14 +1,14 @@
 #!/usr/bin/env ruby
 require File.expand_path('../../../helper', __FILE__)
 require File.expand_path('../../../helpers/column_tests', __FILE__)
-require 'chart/columns/double_column'
+require 'chart/columns/dcolumn'
 
-class Chart::Columns::DoubleColumnTest < Minitest::Test
-  DoubleColumn = Chart::Columns::DoubleColumn
+class Chart::Columns::DColumnTest < Minitest::Test
+  DColumn = Chart::Columns::DColumn
   include ColumnTests
 
   def column_class
-    DoubleColumn
+    DColumn
   end
 
   def serialization_examples

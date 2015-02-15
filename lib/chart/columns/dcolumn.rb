@@ -2,21 +2,16 @@ require 'chart/column'
 
 module Chart
   module Columns
-    class DoubleColumn < Column
+    class DColumn < Column
       class << self
         def default_bucket_size
           100000
-        end
-
-        def type
-          "d"
         end
 
         def match(str)
           str =~ /^-?\d+\.\d+$/
         end
       end
-      register_for_storage "cassandra"
 
       def deserialize(str)
         Float(str)

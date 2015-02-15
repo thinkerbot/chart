@@ -5,8 +5,8 @@ require 'chart/projection'
 module Chart
   class Topic
     class << self
-      def register(type = self.type)
-        TYPES[type] = self
+      def inherited(subclass)
+        TYPES[subclass.type] = subclass
       end
 
       def type
@@ -15,6 +15,10 @@ module Chart
 
       def lookup(type)
         TYPES[type] or raise "unknown topic type: #{type.inspect}"
+      end
+
+      def columns
+        @columns ||= type.chars.map {|c| Column.lookup(c).instance }
       end
     end
     include Projection
@@ -45,11 +49,11 @@ module Chart
     end
 
     def columns
-      @columns ||= storage.column_classes(self.class.type).map {|c| c.new }
+      @columns ||= self.class.columns
     end
 
     def x_column
-      columns[0]
+      @x_column ||= columns[0]
     end
 
     #
@@ -63,18 +67,13 @@ module Chart
 
     def save_data(data)
       data.map do |datum|
-        save_datum_async(*datum)
-      end.map(&:join)
+        save_datum(*datum)
+      end
     end
 
     def save_datum(x, *args)
       pkey = x_column.pkey(x)
       storage.insert_datum(type, id, pkey, x, *args)
-    end
-
-    def save_datum_async(x, *args)
-      pkey = x_column.pkey(x)
-      storage.insert_datum_async(type, id, pkey, x, *args)
     end
 
     def find_data(xmin, xmax, boundary = '[]')
@@ -114,9 +113,8 @@ module Chart
         return enum_for(:write_each, data)
       end
 
-      async = options[:async]
       deserialize_each(data) do |datum|
-        res = async ? save_datum_async(*datum) : save_datum(*datum)
+        res = save_datum(*datum)
         yield res
       end
     end

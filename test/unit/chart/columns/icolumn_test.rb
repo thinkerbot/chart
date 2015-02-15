@@ -1,14 +1,14 @@
 #!/usr/bin/env ruby
 require File.expand_path('../../../helper', __FILE__)
 require File.expand_path('../../../helpers/column_tests', __FILE__)
-require 'chart/columns/integer_column'
+require 'chart/columns/icolumn'
 
-class Chart::Columns::IntegerColumnTest < Minitest::Test
-  IntegerColumn = Chart::Columns::IntegerColumn
+class Chart::Columns::IColumnTest < Minitest::Test
+  IColumn = Chart::Columns::IColumn
   include ColumnTests
 
   def column_class
-    IntegerColumn
+    IColumn
   end
 
   def serialization_examples

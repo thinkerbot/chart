@@ -16,7 +16,7 @@ Setup config files:
     ln -s postgres.example  config/test/postgres
     ln -s config/development/cassandra .chartrc
 
-Migrate:
+Setup cassandra:
 
     chart-console -q < db/cassandra/setup.cql  # one-time
 
@@ -24,3 +24,10 @@ Migrate:
     bundle exec ruby -rerb -e 'puts ERB.new(STDIN.read, nil, "<>").result' < db/cassandra/tables.cql.erb > tmp/db/cassandra/tables.cql
     chart-console -q -c config/development/cassandra < tmp/db/cassandra/tables.cql
     chart-console -q -c config/test/cassandra < tmp/db/cassandra/tables.cql
+
+Setup postgres:
+
+    mkdir -p tmp/db/postgres
+    bundle exec ruby -rerb -e 'puts ERB.new(STDIN.read, nil, "<>").result' < db/postgres/tables.sql.erb > tmp/db/postgres/tables.sql
+    chart-console -q -c config/development/postgres < tmp/db/postgres/tables.sql
+    chart-console -q -c config/test/postgres < tmp/db/postgres/tables.sql

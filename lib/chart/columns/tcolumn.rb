@@ -4,21 +4,16 @@ Time.zone = 'UTC'
 
 module Chart
   module Columns
-    class TimestampColumn < Column
+    class TColumn < Column
       class << self
         def default_bucket_size
           1.day.to_i
-        end
-
-        def type
-          "t"
         end
 
         def match(str)
           (Time.iso8601(str) rescue false) ? true : false
         end
       end
-      register_for_storage "cassandra"
 
       def deserialize(str)
         (str.kind_of?(Time) ? str : Time.iso8601(str)).in_time_zone

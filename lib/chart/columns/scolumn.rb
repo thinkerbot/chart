@@ -2,17 +2,12 @@ require 'chart/column'
 
 module Chart
   module Columns
-    class VarcharColumn < Column
+    class SColumn < Column
       class << self
         def default_bucket_size
           nil
         end
-
-        def type
-          "s"
-        end
       end
-      register_for_storage "cassandra"
 
       def deserialize(str)
         str

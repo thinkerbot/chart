@@ -14,10 +14,10 @@ create table topics (
 
 drop table if exists <%= table_name %>;
 create table <%= table_name %> (
-  xp varint,
-  id varchar,<% columns.each do |name, typestr| %>
+  id varchar,
+  xp varint,<% columns.each do |name, typestr| %>
   <%= name %>  <%= typestr %>,<% end %>
-  primary key ((xp, id), <%= (order_columns + columns[1,1]).map(&:first).join(', ') %>)
+  primary key ((id, xp), <%= (order_columns + columns[1,1]).map(&:first).join(', ') %>)
 )
 with clustering order by (
 <%= order_columns.map {|name, typestr| "  #{name} desc" }.join(",\n") %>

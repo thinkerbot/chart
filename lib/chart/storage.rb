@@ -1,5 +1,5 @@
 require 'chart/config'
-require 'chart/async_interface'
+require 'chart/columns'
 
 module Chart
   class Storage
@@ -11,8 +11,9 @@ module Chart
         new(options, logger)
       end
 
-      def register(type = self.type)
-        TYPES[type] = self
+      def inherited(subclass)
+        Config.register_section(subclass.type, subclass.default_configs)
+        TYPES[subclass.type] = subclass
       end
 
       def type
@@ -42,10 +43,6 @@ module Chart
       def command_env(options = {})
         raise NotImplementedError
       end
-
-      def inherited(subclass)
-        Config.register_section(subclass.type, subclass.default_configs)
-      end
     end
     TYPES = {}
 
@@ -55,13 +52,6 @@ module Chart
     def initialize(options = {}, logger = nil)
       @options = self.class.default_options.merge(options)
       @logger  = logger || Logging.logger[self]
-      @column_classes = {}
-    end
-
-    def column_classes(type)
-      @column_classes[type] ||= begin
-        type.chars.map {|c| Column.lookup("#{self.class.type}.#{c}") }
-      end
     end
 
     # Logging
@@ -78,11 +68,6 @@ module Chart
 
     def execute(query, *args)
       raise NotImplementedError
-    end
-
-    def execute_async(query, *args)
-      res = execute(query, *args)
-      AsyncInterface.new(res)
     end
 
     def command_env

@@ -9,7 +9,7 @@ module Chart
     def test_topic_lifecycle
       assert_equal nil, storage.select_topic_by_id(test_id)
 
-      inputs = ["II", test_id, {}]
+      inputs = ["ii", test_id, {}]
       storage.insert_topic(*inputs)
 
       outputs = storage.select_topic_by_id(test_id)
@@ -24,14 +24,14 @@ module Chart
       ids = [a, b, c]
       assert_equal [], ids & storage.select_topic_ids
 
-      ids.each {|id| storage.insert_topic("II", id, {}) }
+      ids.each {|id| storage.insert_topic("ii", id, {}) }
       assert_equal ids, ids & storage.select_topic_ids
     end
 
     # Data
 
     def test_data_lifecycle
-      type, id = 'II', test_id
+      type, id = 'ii', test_id
 
       data_with_pkey = [
         [0, 0, 1],
@@ -69,25 +69,6 @@ module Chart
       # no data in pkeys
       assert_equal [], storage.select_data(type, id, [3], xmin, xmax, "[]").sort
       assert_equal [], storage.select_data(type, id, [], xmin, xmax, "[]").sort
-    end
-
-    def test_insert_datum_async
-      type, id = 'II', test_id
-      pkey = 0
-      data = [
-        [0, 1],
-        [1, 2],
-        [2, 3],
-        [3, 4],
-      ]
-      xmin = data.map(&:first).sort.first
-      xmax = data.map(&:first).sort.last
-
-      futures = data.map {|x, y| storage.insert_datum_async(type, id, pkey, x, y) }
-      assert_equal true, futures.all? {|f| f.respond_to?(:join) }
-      
-      futures.each(&:join)
-      assert_equal data, storage.select_data(type, id, [pkey], xmin, xmax, "[]").sort
     end
   end
 end
