@@ -72,9 +72,9 @@ Input format:
 
 Output format:
 
-    ??
+    ID,x,y
 
-Not sure who the consumer for export data should be.  Long running exporter?  More thought needed.  At very least a single query is needed in a simple fashion so you can get a csv.
+The idea being that it should be symmetric with the import.
 
 ## chart-server
 
