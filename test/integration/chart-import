@@ -19,8 +19,8 @@ DOC
 test_chart_import_writes_ii_csv_to_topic () {
 setup_ii_input
 id=$(chart-import -a "$infile")
-chart-console -x "select x, y from ii_data where xp = 0 and id = '$id'" |
-assert_output "\
+chart-export - "$id" | assert_output "\
+x,y
 3,4
 2,3
 1,2
