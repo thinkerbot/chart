@@ -18,6 +18,8 @@ Gem::Specification.new do |spec|
   spec.test_files    = []
   spec.require_paths = ["lib"]
 
+  spec.required_ruby_version = '~> 2.2'
+
   spec.add_dependency "sinatra"
   spec.add_dependency "sinatra-contrib"
   spec.add_dependency "logging"
