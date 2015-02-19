@@ -88,13 +88,14 @@ module Chart
     def read_data(range_str, options = {})
       range = x_column.parse(range_str)
       data  = find_data(*range)
-      data  = serialize_data(data)
+      data  = serialize_each(data)
 
       headers, transforms = projections_for(options[:projection])
       transforms.each do |method_name|
         data = send(method_name, data)
       end
 
+      data = data.to_a
       if options[:sort]
         data.sort_by! do |datum|
           [datum[0], datum[1..-1].reverse]
