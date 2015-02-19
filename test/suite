@@ -1,3 +1,12 @@
 #!/bin/bash
 bundle exec ./test/unit/suite &&
-bundle exec ./test/integration/suite
+(  
+  printf "%s\n" cassandra
+  export CHART_CONFIG_FILE=config/test/cassandra 
+  bundle exec ./test/integration/suite
+) &&
+(  
+  printf "%s\n" postgres
+  export CHART_CONFIG_FILE=config/test/postgres 
+  bundle exec ./test/integration/suite
+)

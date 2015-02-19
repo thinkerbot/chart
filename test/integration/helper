@@ -4,8 +4,9 @@ export APP_BIND="${APP_BIND:-0.0.0.0}"
 export APP_PORT="${APP_PORT:-4568}"
 export APP_URL="${APP_URL:-http://${APP_BIND}:${APP_PORT}}"
 export RACK_ENV="test"
+
 export CHART_CONFIG_PATH=""
-export CHART_CONFIG_FILE="config/test/cassandra"
+export CHART_CONFIG_FILE="${CHART_CONFIG_FILE:-config/test/cassandra}"
 
 transpose () {
   tr "\n" " " | sed -e "s/ $//"
