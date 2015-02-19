@@ -84,6 +84,14 @@ module Chart
         self
       end
 
+      def start_transaction
+        client.exec("BEGIN")
+      end
+
+      def end_transaction
+        client.exec("COMMIT")
+      end
+
       def execute(query, *args)
         log_execute(query, args)
         statement = prepared_statements[query]

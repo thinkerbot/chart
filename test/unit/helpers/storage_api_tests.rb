@@ -48,7 +48,11 @@ module Chart
       assert_equal [], storage.select_data(type, id, pkeys, xmin, xmax, "[]")
 
       # all data
-      data_with_pkey.each {|pkey, x, y| storage.insert_datum(type, id, pkey, x, y) }
+      storage.transaction do
+        data_with_pkey.each do |pkey, x, y|
+          storage.insert_datum(type, id, pkey, x, y)
+        end
+      end
       
       assert_equal data, storage.select_data(type, id, pkeys, xmin, xmax, "[]").sort
       assert_equal data, storage.select_data(type, id, pkeys, xmin, xmax + 1, "[)").sort

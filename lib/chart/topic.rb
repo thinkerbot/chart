@@ -120,7 +120,9 @@ module Chart
     end
 
     def write_data(data, options = {})
-      write_each(data).map.to_a
+      storage.transaction do
+        write_each(data).map.to_a
+      end
     end
 
     #
