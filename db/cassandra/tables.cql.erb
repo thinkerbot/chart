@@ -6,10 +6,10 @@ create table topics (
   primary key (id)
 );
 <% require 'chart/topics' %>
-<% require 'chart/storage_types' %>
+<% require 'chart/storage_types/cassandra_storage' %>
 <% Chart::Topic::TYPES.each_pair do |type, topic_class| %>
-<%   table_name   = Chart::StorageTypes::CassandraStorage.table_name_for(type) %>
-<%   columns      = Chart::StorageTypes::CassandraStorage.columns_for_type(type) %>
+<%   table_name   = Chart::StorageUtils.table_name_for(type) %>
+<%   columns      = Chart::StorageUtils.columns_for_type(type, Chart::StorageTypes::CassandraStorage::COLUMN_TYPE_MAP) %>
 <%   order_columns = columns.dup; order_columns.delete_at(1) %>
 
 drop table if exists <%= table_name %>;

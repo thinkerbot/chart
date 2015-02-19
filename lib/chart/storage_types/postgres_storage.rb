@@ -1,4 +1,5 @@
 require 'chart/storage'
+require 'chart/storage_utils'
 require 'json'
 autoload :PG, 'pg'
 
@@ -46,39 +47,14 @@ module Chart
           command = ["psql", "-h", options[:host], "-p", options[:port], "-U", options[:user], "-d", options[:dbname]]
           [command.map(&:to_s), {}]
         end
-
-        def table_name_for(type)
-          "#{type}_data"
-        end
-
-        def column_names_for(type)
-          column_names = Enumerator.new do |y|
-            y << 'x'; y << 'y'; y << 'z';
-            n = 1
-            loop do
-              y << "z#{n}"
-              n += 1
-            end
-          end
-          type.chars.map {|c| column_names.next }
-        end
-
-        def typestrs_for(type)
-          type.chars.map do |c|
-            case c
-            when "d" then "double"
-            when "i" then "integer"
-            when "t" then "timestamp"
-            when "s" then "varchar"
-            else raise "unknown column type: #{c.inspect}"
-            end
-          end
-        end
-
-        def columns_for_type(type)
-          column_names_for(type).zip(typestrs_for(type))
-        end
       end
+
+      COLUMN_TYPE_MAP = {
+        Columns::DColumn.type => "double",
+        Columns::IColumn.type => "integer",
+        Columns::TColumn.type => "timestamp",
+        Columns::SColumn.type => "varchar",
+      }
 
       def client
         @client ||= begin
@@ -156,8 +132,8 @@ module Chart
 
       def select_data_queries
         @select_data_queries ||= Hash.new do |cache, type|
-          table_name   = self.class.table_name_for(type)
-          column_names = self.class.column_names_for(type)
+          table_name   = StorageUtils.table_name_for(type)
+          column_names = StorageUtils.column_names_for(type)
           cache[type] = {
             "[]" => "select #{column_names.join(', ')} from #{table_name} where id = $1 and xp = $2 and x >= $3 and x <= $4",
             "[)" => "select #{column_names.join(', ')} from #{table_name} where id = $1 and xp = $2 and x >= $3 and x <  $4",
@@ -169,8 +145,8 @@ module Chart
 
       def insert_datum_queries
         @insert_datum_queries ||= Hash.new do |cache, type|
-          table_name   = self.class.table_name_for(type)
-          column_names = self.class.column_names_for(type)
+          table_name   = StorageUtils.table_name_for(type)
+          column_names = StorageUtils.column_names_for(type)
           cache[type]  = "insert into #{table_name} (id, xp, #{column_names.join(', ')}) values ($1, $2, #{column_names.each_with_index.map {|s, i| "$#{i + 3}"}.join(', ')})"
         end
       end

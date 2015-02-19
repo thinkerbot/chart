@@ -10,20 +10,4 @@ class Chart::StorageTypes::CassandraStorageTest < Minitest::Test
   def storage_type
     'cassandra'
   end
-
-  #
-  # table_name_for
-  #
-
-  def test_table_name_for_returns_table_name_derived_from_type
-    assert_equal "ii_data", CassandraStorage.table_name_for("ii")
-  end
-
-  #
-  # column_names_for
-  #
-
-  def test_column_names_for_returns_array_of_column_names_derived_from_type
-    assert_equal ["x", "y"], CassandraStorage.column_names_for("ii")
-  end
 end

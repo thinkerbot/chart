@@ -1,4 +1,5 @@
 require 'chart/storage'
+require 'chart/storage_utils'
 require 'json'
 autoload :Cassandra, 'cassandra'
 
@@ -49,43 +50,14 @@ module Chart
 
           [command.map(&:to_s), {}]
         end
-
-        #
-        # helpers
-        #
-
-        def table_name_for(type)
-          "#{type}_data"
-        end
-
-        def column_names_for(type)
-          column_names = Enumerator.new do |y|
-            y << 'x'; y << 'y'; y << 'z';
-            n = 1
-            loop do
-              y << "z#{n}"
-              n += 1
-            end
-          end
-          type.chars.map {|c| column_names.next }
-        end
-
-        def typestrs_for(type)
-          type.chars.map do |c|
-            case c
-            when "d" then "double"
-            when "i" then "varint"
-            when "t" then "timestamp"
-            when "s" then "varchar"
-            else raise "unknown column type: #{c.inspect}"
-            end
-          end
-        end
-
-        def columns_for_type(type)
-          column_names_for(type).zip(typestrs_for(type))
-        end
       end
+
+      COLUMN_TYPE_MAP = {
+        Columns::DColumn.type => "double",
+        Columns::IColumn.type => "varint",
+        Columns::TColumn.type => "timestamp",
+        Columns::SColumn.type => "varchar",
+      }
 
       def cluster
         @cluster ||= Cassandra.cluster(options)
@@ -165,8 +137,8 @@ module Chart
 
       def select_data_queries
         @select_data_queries ||= Hash.new do |cache, type|
-          table_name   = self.class.table_name_for(type)
-          column_names = self.class.column_names_for(type)
+          table_name   = StorageUtils.table_name_for(type)
+          column_names = StorageUtils.column_names_for(type)
           cache[type] = {
             "[]" => "select #{column_names.join(', ')} from #{table_name} where id = ? and xp = ? and x >= ? and x <= ?",
             "[)" => "select #{column_names.join(', ')} from #{table_name} where id = ? and xp = ? and x >= ? and x <  ?",
@@ -178,8 +150,8 @@ module Chart
 
       def insert_datum_queries
         @insert_datum_queries ||= Hash.new do |cache, type|
-          table_name   = self.class.table_name_for(type)
-          column_names = self.class.column_names_for(type)
+          table_name   = StorageUtils.table_name_for(type)
+          column_names = StorageUtils.column_names_for(type)
           cache[type]  = "insert into #{table_name} (id, xp, #{column_names.join(', ')}) values (?, ?, #{column_names.map {|s| "?"}.join(', ')})"
         end
       end
