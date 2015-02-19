@@ -109,21 +109,14 @@ module Chart
       data
     end
 
-    def write_each(data, options = {})
-      unless block_given?
-        return enum_for(:write_each, data)
-      end
-
-      deserialize_each(data) do |datum|
-        res = save_datum(*datum)
-        yield res
-      end
-    end
-
     def write_data(data, options = {})
-      storage.transaction do
-        write_each(data).map.to_a
+      results = []
+      deserialize_each(data) do |datum|
+        storage.transaction do
+          results << save_datum(*datum)
+        end
       end
+      results
     end
 
     #
@@ -144,10 +137,6 @@ module Chart
       end
     end
 
-    def deserialize_data(data)
-      deserialize_each(data).map.to_a
-    end
-
     def serialize_each(data)
       unless block_given?
         return enum_for(:serialize_each, data)
@@ -160,10 +149,6 @@ module Chart
         end
         yield odata
       end
-    end
-
-    def serialize_data(data)
-      serialize_each(data).map.to_a
     end
 
     def to_json
