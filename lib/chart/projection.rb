@@ -2,22 +2,22 @@ module Chart
   module Projection
     module_function
 
-    def xy_to_y(inputs)
+    def xy_to_y(inputs_enum)
       outputs = Hash.new(0)
-      inputs.each do |(x,y)|
+      inputs_enum.each do |(x,y)|
         outputs[y] += 1
       end
-      outputs.to_a
+      outputs.each
     end
 
-    def xyz_to_xy_by_z_max(inputs) 
+    def xyz_to_xy_by_z_max(inputs_enum) 
       outputs = []
-      inputs.group_by do |(x,y,z)|
+      inputs_enum.to_a.group_by do |(x,y,z)|
         x
       end.each_pair do |(x, xyz_data)|
         outputs << xyz_data.sort_by(&:last).last[0,2]
       end
-      outputs
+      outputs.each
     end
   end
 end

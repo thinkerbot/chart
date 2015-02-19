@@ -84,6 +84,14 @@ module Chart
         self
       end
 
+      def start_transaction
+        client.exec("BEGIN")
+      end
+
+      def end_transaction
+        client.exec("COMMIT")
+      end
+
       def execute(query, *args)
         log_execute(query, args)
         statement = prepared_statements[query]
@@ -135,10 +143,10 @@ module Chart
           table_name   = StorageUtils.table_name_for(type)
           column_names = StorageUtils.column_names_for(type)
           cache[type] = {
-            "[]" => "select #{column_names.join(', ')} from #{table_name} where id = $1 and xp = $2 and x >= $3 and x <= $4",
-            "[)" => "select #{column_names.join(', ')} from #{table_name} where id = $1 and xp = $2 and x >= $3 and x <  $4",
-            "(]" => "select #{column_names.join(', ')} from #{table_name} where id = $1 and xp = $2 and x >  $3 and x <= $4",
-            "()" => "select #{column_names.join(', ')} from #{table_name} where id = $1 and xp = $2 and x >  $3 and x <  $4",
+            "[]" => "select #{column_names.join(', ')} from #{table_name} where id = $1 and xp = $2 and x >= $3 and x <= $4 order by x desc",
+            "[)" => "select #{column_names.join(', ')} from #{table_name} where id = $1 and xp = $2 and x >= $3 and x <  $4 order by x desc",
+            "(]" => "select #{column_names.join(', ')} from #{table_name} where id = $1 and xp = $2 and x >  $3 and x <= $4 order by x desc",
+            "()" => "select #{column_names.join(', ')} from #{table_name} where id = $1 and xp = $2 and x >  $3 and x <  $4 order by x desc",
           }
         end
       end

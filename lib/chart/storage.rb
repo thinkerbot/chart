@@ -70,6 +70,21 @@ module Chart
       raise NotImplementedError
     end
 
+    def start_transaction
+    end
+
+    def end_transaction
+    end
+
+    def transaction
+      begin
+        start_transaction
+        yield
+      ensure
+        end_transaction
+      end
+    end
+
     def command_env
       self.class.command_env(options)
     end
@@ -95,10 +110,6 @@ module Chart
     end
 
     def insert_datum(type, id, pkey, *datum)
-      raise NotImplementedError
-    end
-
-    def insert_datum_async(type, id, pkey, *datum)
       raise NotImplementedError
     end
   end
