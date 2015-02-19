@@ -2,18 +2,10 @@ require 'chart/column'
 
 module Chart
   module Columns
-    class VarcharColumn < Column
+    class SColumn < Column
       class << self
         def default_bucket_size
           nil
-        end
-
-        def signature
-          "s"
-        end
-
-        def typestr
-          "varchar"
         end
       end
 

@@ -1,14 +1,14 @@
 #!/usr/bin/env ruby
 require File.expand_path('../../../helper', __FILE__)
-require File.expand_path('../../column_test', __FILE__)
-require 'chart/columns/timestamp_column'
+require File.expand_path('../../../helpers/column_tests', __FILE__)
+require 'chart/columns/tcolumn'
 
-class Chart::Columns::TimestampColumnTest < Test::Unit::TestCase
-  TimestampColumn = Chart::Columns::TimestampColumn
-  include ColumnTest
+class Chart::Columns::TColumnTest < Minitest::Test
+  TColumn = Chart::Columns::TColumn
+  include ColumnTests
 
   def column_class
-    TimestampColumn
+    TColumn
   end
 
   def serialization_examples

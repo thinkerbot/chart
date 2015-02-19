@@ -2,18 +2,10 @@ require 'chart/column'
 
 module Chart
   module Columns
-    class DoubleColumn < Column
+    class DColumn < Column
       class << self
         def default_bucket_size
           100000
-        end
-
-        def signature
-          "d"
-        end
-
-        def typestr
-          "double"
         end
 
         def match(str)

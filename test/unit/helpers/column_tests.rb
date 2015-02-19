@@ -1,4 +1,4 @@
-module ColumnTest
+module ColumnTests
   def column_class
     raise NotImplementedError
   end

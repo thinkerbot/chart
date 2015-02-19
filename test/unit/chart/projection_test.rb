@@ -2,7 +2,7 @@
 require File.expand_path('../../helper', __FILE__)
 require 'chart/projection'
 
-class Chart::ProjectionTest < Test::Unit::TestCase
+class Chart::ProjectionTest < Minitest::Test
   include Chart::Projection
 
   def test_xy_to_y_counts_by_y

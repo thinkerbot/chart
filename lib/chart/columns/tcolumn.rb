@@ -4,18 +4,10 @@ Time.zone = 'UTC'
 
 module Chart
   module Columns
-    class TimestampColumn < Column
+    class TColumn < Column
       class << self
         def default_bucket_size
           1.day.to_i
-        end
-
-        def signature
-          "t"
-        end
-
-        def typestr
-          "timestamp"
         end
 
         def match(str)

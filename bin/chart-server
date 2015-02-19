@@ -21,6 +21,10 @@ options:
       options[:bind] = value
     end
 
+    opts.on("-c", "--config-file CONFIG_FILE", "config file (#{options[:config_file]})") do |value|
+      options[:config_file] = value
+    end
+
     opts.on("-e", "--environment ENV", "environment (#{options[:environment]})") do |value|
       options[:environment] = value
     end
@@ -34,6 +38,10 @@ options:
 
     opts.on("--[no-]reload-templates", "reload templates between requests (#{options[:reload_templates]})") do |value|
       options[:reload_templates] = value
+    end
+
+    opts.on("-o", "--option KEY=VALUE", "override config option") do |value|
+      options[:settings] << value
     end
 
     opts.on("-p", "--port PORT", "run on the specified port (#{options[:port]})") do |value|
@@ -51,7 +59,12 @@ options:
     File.open(pidfile, "w") {|io| io.puts Process.pid }
   end
 
-  Chart::Server.set(options)
+  Chart::Server.set(
+    :bind => options[:bind],
+    :port => options[:port],
+    :driver => Chart.driver,
+    :reload_templates => options[:reload_templates],
+  )
   Chart::Server.run!
 
 rescue Interrupt

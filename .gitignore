@@ -17,6 +17,10 @@ test/tmp
 test/version_tmp
 tmp
 .vagrant
-config/*.yml
+config/development/cassandra
+config/development/postgres
+config/test/cassandra
+config/test/postgres
 log/
-vm/tables.cql
+.chartrc
+

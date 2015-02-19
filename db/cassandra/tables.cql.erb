@@ -1,0 +1,26 @@
+drop table if exists topics;
+create table topics (
+  id     varchar,
+  type   varchar,
+  config varchar,
+  primary key (id)
+);
+<% require 'chart/topics' %>
+<% require 'chart/storage_types/cassandra_storage' %>
+<% Chart::Topic::TYPES.each_pair do |type, topic_class| %>
+<%   table_name   = Chart::StorageUtils.table_name_for(type) %>
+<%   columns      = Chart::StorageUtils.columns_for_type(type, Chart::StorageTypes::CassandraStorage::COLUMN_TYPE_MAP) %>
+<%   order_columns = columns.dup; order_columns.delete_at(1) %>
+
+drop table if exists <%= table_name %>;
+create table <%= table_name %> (
+  id varchar,
+  xp varint,<% columns.each do |name, typestr| %>
+  <%= name %>  <%= typestr %>,<% end %>
+  primary key ((id, xp), <%= (order_columns + columns[1,1]).map(&:first).join(', ') %>)
+)
+with clustering order by (
+<%= order_columns.map {|name, typestr| "  #{name} desc" }.join(",\n") %>
+
+);
+<% end %>

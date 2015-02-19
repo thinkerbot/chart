@@ -3,7 +3,6 @@
 
 mkdir -p "tmp/pids"
 mkdir -p "log"
-chart-console -q -e test < vm/tables.cql
 chart-server -b "$APP_BIND" -p "$APP_PORT" --pidfile "tmp/pids/test.pid" > log/test.log 2>&1 &
 sleep 5
 

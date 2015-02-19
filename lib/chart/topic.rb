@@ -1,129 +1,43 @@
-require 'chart/connection'
+require 'chart/storage'
 require 'chart/columns'
 require 'chart/projection'
-require 'json'
 
 module Chart
   class Topic
     class << self
-      def connection
-        @connection || raise("connection is not set")
-      end
-
-      def connect(options = {})
-        disconnect
-        @connection = Connection.setup(options)
-        self
-      end
-
-      def disconnect
-        if connected?
-          @connection.close
-          @connection = nil
-        end
-        self
-      end
-
-      def connected?
-        @connection ? true : false
-      end
-
-      def list
-        rows = connection.execute("select id from topics")
-        rows.map {|row| row["id"] }
-      end
-
-      def find(id)
-        return nil if id.nil?
-
-        rows = connection.execute("select id, type, config from topics where id = ?", id)
-        row = rows.first
-        row ? from_values(row.values) : nil
-      end
-
-      def create(id, type = self.type, config = {})
-        topic_class = topic_class_for_type(type)
-        topic_class.new(id, config).save
-      end
-
-      def from_values(values)
-        id, type, config_json = values
-        topic_class = topic_class_for_type(type)
-        topic_class.new(id, config_json ? JSON.parse(config_json) : {})
-      end
-
-      def topic_class_for_type(type)
-        Topics.const_get("#{type.upcase}Topic") or raise("no such type: #{type.inspect}")
-      end
-
       def inherited(subclass)
-        Topic::TYPES << subclass.type
+        TYPES[subclass.type] = subclass
       end
 
       def type
-        @type ||= begin
-          prefix = self.to_s.split("::").last.downcase.chomp("topic")
-          prefix.empty? ? "ii" : prefix
-        end
+        @type ||= self.to_s.split("::").last.downcase.chomp("topic")
       end
 
-      def data_table
-        @data_table ||= "#{type}_data"
+      def lookup(type)
+        TYPES[type] or raise "unknown topic type: #{type.inspect}"
       end
 
-      def column_names
-        @column_names ||= begin
-          column_names = Enumerator.new do |y|
-            y << 'x'; y << 'y'; y << 'z';
-            n = 1
-            loop do
-              y << "z#{n}"
-              n += 1
-            end
-          end
-          type.chars.map {|c| column_names.next }
-        end
-      end
-
-      def column_classes
-        @column_classes ||= begin
-          type.chars.map {|c| Columns.lookup(c) }
-        end
-      end
-
-      def save_datum_query
-        @save_datum_query ||= "insert into #{data_table} (xp, id, #{column_names.join(', ')}) values (?, ?, #{column_names.map {|s| "?"}.join(', ')})"
-      end
-
-      def find_data_queries
-        @find_data_queries ||= {
-          "[]" => "select #{column_names.join(', ')} from #{data_table} where xp = ? and id = ? and x >= ? and x <= ?",
-          "[)" => "select #{column_names.join(', ')} from #{data_table} where xp = ? and id = ? and x >= ? and x <  ?",
-          "(]" => "select #{column_names.join(', ')} from #{data_table} where xp = ? and id = ? and x >  ? and x <= ?",
-          "()" => "select #{column_names.join(', ')} from #{data_table} where xp = ? and id = ? and x >  ? and x <  ?",
-        }
+      def columns
+        @columns ||= type.chars.map {|c| Column.lookup(c).instance }
       end
     end
     include Projection
 
-    TYPES = []
+    TYPES = {}
     PROJECTIONS = {}
 
+    attr_reader :storage
     attr_reader :id
-    attr_reader :type
     attr_reader :config
 
-    def initialize(id, config = {})
+    def initialize(storage, id, config = {})
+      @storage = storage
       @id = id
       @config = config
     end
 
     def type
       self.class.type
-    end
-
-    def connection
-      Topic.connection
     end
 
     def [](key)
@@ -135,11 +49,11 @@ module Chart
     end
 
     def columns
-      @columns ||= self.class.column_classes.map {|c| c.new }
+      @columns ||= self.class.columns
     end
 
     def x_column
-      columns[0]
+      @x_column ||= columns[0]
     end
 
     #
@@ -147,34 +61,24 @@ module Chart
     #
 
     def save
-      connection.execute("insert into topics (id, type, config) values (?, ?, ?)", *to_values)
+      storage.insert_topic(type, id, config)
       self
     end
 
     def save_data(data)
       data.map do |datum|
-        save_datum_async(*datum)
-      end.map(&:join)
+        save_datum(*datum)
+      end
     end
 
     def save_datum(x, *args)
-      xp = x_column.pkey(x)
-      connection.execute(self.class.save_datum_query, xp, id, x, *args)
-    end
-
-    def save_datum_async(x, *args)
-      xp = x_column.pkey(x)
-      connection.execute_async(self.class.save_datum_query, xp, id, x, *args)
+      pkey = x_column.pkey(x)
+      storage.insert_datum(type, id, pkey, x, *args)
     end
 
     def find_data(xmin, xmax, boundary = '[]')
-      query = self.class.find_data_queries[boundary] or raise("invalid boundary condition: #{boundary.inspect}")
-      data  = []
-      x_column.pkeys_for_range(xmin, xmax).each do |xp|
-        rows = connection.execute(query, xp, id, xmin, xmax)
-        rows.each {|row| data << row.values }
-      end
-      data
+      pkeys = x_column.pkeys_for_range(xmin, xmax)
+      storage.select_data(type, id, pkeys, xmin, xmax, boundary)
     end
 
     def projections_for(projection_type)
@@ -209,9 +113,8 @@ module Chart
         return enum_for(:write_each, data)
       end
 
-      async = options[:async]
       deserialize_each(data) do |datum|
-        res = async ? save_datum_async(*datum) : save_datum(*datum)
+        res = save_datum(*datum)
         yield res
       end
     end
@@ -266,10 +169,6 @@ module Chart
         :type => type,
         :config => config
       }.to_json
-    end
-
-    def to_values
-      [id, type, config.to_json]
     end
   end
 end

@@ -2,18 +2,10 @@ require 'chart/column'
 
 module Chart
   module Columns
-    class IntegerColumn < Column
+    class IColumn < Column
       class << self
         def default_bucket_size
           100000
-        end
-
-        def signature
-          "i"
-        end
-
-        def typestr
-          "varint"
         end
 
         def match(str)
